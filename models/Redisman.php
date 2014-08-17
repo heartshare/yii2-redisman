@@ -5,8 +5,9 @@
  * Date: 17.08.14
  * Time: 11:22
  */
-
-class Redis extends \yii\base\Model{
+namespace insolita\redisman\models;
+use Redis;
+class Redisman extends \yii\base\Model{
     /**
      * Returns list of redis object types, or string name of current type
      * @return string
