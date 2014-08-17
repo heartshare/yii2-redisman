@@ -99,7 +99,7 @@ class Redisman extends Model{
     public static  function setExpire($key,$ttl){
         //$ttl=time()+$ttl;
         $db=static::getDb();
-        $db->executeCommand('EXPIRE',$key);
+        $db->executeCommand('EXPIRE',$key, $ttl);
     }
 
 
