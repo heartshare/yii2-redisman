@@ -5,6 +5,7 @@
  * Date: 17.08.14
  * Time: 13:05
  */
+namespace insolita\redisman\models;
 
 class RedisItem extends \yii\base\Object{
    public $key;

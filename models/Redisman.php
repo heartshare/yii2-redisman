@@ -6,18 +6,24 @@
  * Time: 11:22
  */
 namespace insolita\redisman\models;
-use Redis;
-class Redisman extends \yii\base\Model{
+use \Redis;
+use yii\base\InvalidCallException;
+use yii\base\Model;
+
+class Redisman extends Model{
+
     /**
      * Returns list of redis object types, or string name of current type
+     * @param (string|null)
      * @return string
      */
     public static function getTypeList($type=null){
-        $types=[Redis::REDIS_STRING=>Yii::t('redisman','строка'),
-            Redis::REDIS_SET=>Yii::t('redisman','Набор'),
-            Redis::REDIS_LIST=>Yii::t('redisman','Список'),
-            Redis::REDIS_ZSET=>Yii::t('redisman','Множество'),
-            Redis::REDIS_HASH=>Yii::t('redisman','Хэш')];
+        $types=[
+            Redis::REDIS_STRING=>\Yii::t('redisman','строка'),
+            Redis::REDIS_SET=>\Yii::t('redisman','Набор'),
+            Redis::REDIS_LIST=>\Yii::t('redisman','Список'),
+            Redis::REDIS_ZSET=>\Yii::t('redisman','Множество'),
+            Redis::REDIS_HASH=>\Yii::t('redisman','Хэш')];
         return isset($types[$type])?$types[$type]:$types;
     }
     /**
@@ -54,18 +60,19 @@ class Redisman extends \yii\base\Model{
         if(is_array($keys)) $keys=[];
         return $keys;
     }
-    /**
-     * Возвращает список групп (ключей разбиваемых по разделительному символу)
-     * @param string $startgroup - начальная группа
-     * @param string $depth - глубина разбиения - 0 - первый уровень;
-    */
+
+
+    /**Возвращает список групп (ключей разбиваемых по разделительному символу)
+     * @param string $startgroup начальная группа
+     * @param int $depth глубина разбиения - 0 - первый уровень
+     * @return array
+     */
     public static function getGrouplist($startgroup='*',$depth=0){
-       $db=static::getDb();
-       if(($gl=Yii::$app->cache->get($startgroup.'_redisgrouplist'))==false){
-           $groupped=['@'=>Yii::t('redisman','Без группы')];
+       if(($gl=\Yii::$app->cache->get($startgroup.'_redisgrouplist'))==false){
+           $groupped=['@'=>\Yii::t('redisman','Без группы')];
            $keys=static::getAllkeys($startgroup);
            foreach($keys as $key){
-               $keyparts=explode(Yii::$app->getModule('redisman')->groupDelimiter,$key);
+               $keyparts=explode(\Yii::$app->getModule('redisman')->groupDelimiter,$key);
                $kp_count=count($keyparts);
                if($kp_count>1){
                    $stopper=($depth>=$kp_count)?$kp_count-1:$depth;
@@ -78,6 +85,8 @@ class Redisman extends \yii\base\Model{
                    }
                }
            }
+           \Yii::$app->cache->set($startgroup.'_redisgrouplist',$groupped,\Yii::$app->getModule('redisman')->grouplistCacheDuration);
+           return $groupped;
        }else{
            return $gl;
        }
@@ -92,19 +101,24 @@ class Redisman extends \yii\base\Model{
         $db=static::getDb();
         $db->executeCommand('EXPIRE',$key);
     }
+
+
     /**
-     * @param string $key
-     * @return $ttl - live time in seconds
+     * @param $key
+     * @return array|bool|null|string
      */
     public static  function getExpire($key){
         //$ttl=time()+$ttl;
         $db=static::getDb();
         return $db->executeCommand('TTL',$key);
     }
+
+
     /**
-     * Universal data getter from db
-     * @param string $key
-     * @throw \yii\base\InvalidCallException
+     * Universal redis data getter
+     * @param $key
+     * @return array|bool|null|string
+     * @throws \yii\base\InvalidCallException
      */
     public static function getData($key){
         $db=static::getDb();
@@ -120,15 +134,17 @@ class Redisman extends \yii\base\Model{
         }elseif($type==Redis::REDIS_LIST){
             return $db->executeCommand('LRANGE',$key,0,-1);
         }else{
-            throw new \yii\base\InvalidCallException('Unknown type of data');
+            throw new InvalidCallException('Unknown type of data');
         }
     }
+
+
     /**
-     * Universal data setter to db
-     * @param string $key
-     * @param Redis $type
-     * @param string|array|integer  $val
-     * @throw \yii\base\InvalidCallException
+     * Universal Redis data getter
+     * @param $type
+     * @param $key
+     * @param $val
+     * @throws \yii\base\InvalidCallException
      */
     public static function add($type,$key,$val){
         $db=static::getDb();
@@ -143,7 +159,7 @@ class Redisman extends \yii\base\Model{
         }elseif($type==Redis::REDIS_LIST){
              $db->executeCommand('RPUSH',$key,$val);
         }else{
-            throw new \yii\base\InvalidCallException('Unknown type of data');
+            throw new InvalidCallException('Unknown type of data');
         }
     }
 
