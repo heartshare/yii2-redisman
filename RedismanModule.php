@@ -24,7 +24,28 @@ class RedismanModule extends Module {
      * @var int $grouplistCacheDuration - Время кеширования списка груп
      */
     public $grouplistCacheDuration=3600;
-    public function init(){
 
+    /**
+     * @var array the the internalization configuration for this module
+     */
+    public $i18n = [];
+
+    public function init()
+    {
+        parent::init();
+        $this->initI18N();
+
+    }
+    public function initI18N()
+    {
+        \Yii::setAlias('@redisman', dirname(__FILE__));
+        if (empty($this->i18n)) {
+            $this->i18n = [
+                'class' => 'yii\i18n\PhpMessageSource',
+                'basePath' => '@redisman/messages',
+                'forceTranslation' => false
+            ];
+        }
+        \Yii::$app->i18n->translations['redisman'] = $this->i18n;
     }
 } 

@@ -6,7 +6,7 @@
  * Time: 11:22
  */
 namespace insolita\redisman\models;
-use \Redis;
+use Redis;
 use yii\base\InvalidCallException;
 use yii\base\Model;
 
@@ -18,12 +18,12 @@ class Redisman extends Model{
      * @return string
      */
     public static function getTypeList($type=null){
-        $types=[
+        $types=array(
             Redis::REDIS_STRING=>\Yii::t('redisman','строка'),
             Redis::REDIS_SET=>\Yii::t('redisman','Набор'),
             Redis::REDIS_LIST=>\Yii::t('redisman','Список'),
             Redis::REDIS_ZSET=>\Yii::t('redisman','Множество'),
-            Redis::REDIS_HASH=>\Yii::t('redisman','Хэш')];
+            Redis::REDIS_HASH=>\Yii::t('redisman','Хэш'));
         return isset($types[$type])?$types[$type]:$types;
     }
     /**
