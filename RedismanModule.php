@@ -25,7 +25,7 @@ class RedismanModule extends Module {
      */
     public $grouplistCacheDuration=3600;
 
-    /**
+     /**
      * @var array the the internalization configuration for this module
      */
     public $i18n = [];
@@ -33,19 +33,26 @@ class RedismanModule extends Module {
     public function init()
     {
         parent::init();
-        $this->initI18N();
+
+        $this->registerTranslations();
 
     }
-    public function initI18N()
+    public function registerTranslations()
     {
-        \Yii::setAlias('@redisman', dirname(__FILE__));
-        if (empty($this->i18n)) {
-            $this->i18n = [
-                'class' => 'yii\i18n\PhpMessageSource',
-                'basePath' => '@redisman/messages',
-                'forceTranslation' => false
-            ];
-        }
-        \Yii::$app->i18n->translations['redisman'] = $this->i18n;
+       \Yii::setAlias('@redisman_messages',__DIR__.'/messages');
+        \Yii::$app->i18n->translations['redisman'] = [
+            'class' => 'yii\i18n\PhpMessageSource',
+            'sourceLanguage' => 'ru',
+            'basePath' => '@redisman_messages',
+            'fileMap' => [
+                    '*' => 'redisman.php',
+            ],
+        ];
     }
+    public static function t($message, $params = [], $language = null)
+    {
+        //return \Yii::t('redisman', $message, $params, $language);
+        return \Yii::t('app', $message, $params, $language);
+    }
+
 } 

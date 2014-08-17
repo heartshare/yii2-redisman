@@ -6,6 +6,7 @@
  * Time: 11:22
  */
 namespace insolita\redisman\models;
+use insolita\redisman\RedismanModule;
 use Redis;
 use yii\base\InvalidCallException;
 use yii\base\Model;
@@ -19,11 +20,11 @@ class Redisman extends Model{
      */
     public static function getTypeList($type=null){
         $types=array(
-            Redis::REDIS_STRING=>\Yii::t('redisman','строка'),
-            Redis::REDIS_SET=>\Yii::t('redisman','Набор'),
-            Redis::REDIS_LIST=>\Yii::t('redisman','Список'),
-            Redis::REDIS_ZSET=>\Yii::t('redisman','Множество'),
-            Redis::REDIS_HASH=>\Yii::t('redisman','Хэш'));
+            Redis::REDIS_STRING=>RedismanModule::t('строка'),
+            Redis::REDIS_SET=>RedismanModule::t('Набор'),
+            Redis::REDIS_LIST=>RedismanModule::t('Список'),
+            Redis::REDIS_ZSET=>RedismanModule::t('Множество'),
+            Redis::REDIS_HASH=>RedismanModule::t('Хеш'));
         return isset($types[$type])?$types[$type]:$types;
     }
     /**
@@ -45,7 +46,7 @@ class Redisman extends Model{
      */
     public static function getType($key, $native=false){
         $db=static::getDb();
-        $type= $db->executeCommand('TYPE',$key);
+        $type= $db->executeCommand('TYPE',[$key]);
         return ($native)?$type:self::getTypeList($type);
     }
 
@@ -69,7 +70,7 @@ class Redisman extends Model{
      */
     public static function getGrouplist($startgroup='*',$depth=0){
        if(($gl=\Yii::$app->cache->get($startgroup.'_redisgrouplist'))==false){
-           $groupped=['@'=>\Yii::t('redisman','Без группы')];
+           $groupped=['@'=>RedismanModule::t('Без группы')];
            $keys=static::getAllkeys($startgroup);
            foreach($keys as $key){
                $keyparts=explode(\Yii::$app->getModule('redisman')->groupDelimiter,$key);
@@ -99,7 +100,7 @@ class Redisman extends Model{
     public static  function setExpire($key,$ttl){
         //$ttl=time()+$ttl;
         $db=static::getDb();
-        $db->executeCommand('EXPIRE',$key, $ttl);
+        $db->executeCommand('EXPIRE',[$key, $ttl]);
     }
 
 
@@ -171,7 +172,7 @@ class Redisman extends Model{
      */
     public static function rename($key,$newkey){
         $db=static::getDb();
-        $db->executeCommand('RENAME',$key,$newkey);
+        $db->executeCommand('RENAME',[$key,$newkey]);
     }
 
 } 
