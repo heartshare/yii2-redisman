@@ -124,15 +124,15 @@ class Redisman extends Model{
         $db=static::getDb();
         $type=self::getType($key,true);
         if($type==Redis::REDIS_STRING){
-            return $db->executeCommand('GET',$key);
+            return $db->executeCommand('GET',[$key]);
         }elseif($type==Redis::REDIS_HASH){
-            return $db->executeCommand('HGETALL',$key);
+            return $db->executeCommand('HGETALL',[$key]);
         }elseif($type==Redis::REDIS_ZSET){
-            return $db->executeCommand('ZREVRANGE',$key,0,-1);
+            return $db->executeCommand('ZREVRANGE',[$key,0,-1]);
         }elseif($type==Redis::REDIS_SET){
-            return $db->executeCommand('SMEMBERS',$key);
+            return $db->executeCommand('SMEMBERS',[$key]);
         }elseif($type==Redis::REDIS_LIST){
-            return $db->executeCommand('LRANGE',$key,0,-1);
+            return $db->executeCommand('LRANGE',[$key,0,-1]);
         }else{
             throw new InvalidCallException('Unknown type of data');
         }
@@ -148,16 +148,17 @@ class Redisman extends Model{
      */
     public static function add($type,$key,$val){
         $db=static::getDb();
+        $ins=is_array($val)?array_unshift($val,$key):[$key,$val];
         if($type==Redis::REDIS_STRING){
-             $db->executeCommand('SET',$key,$val);
+             $db->executeCommand('SET',$ins);
         }elseif($type==Redis::REDIS_HASH){
-             $db->executeCommand('HMSET',$key,$val);
+             $db->executeCommand('HMSET',$ins);
         }elseif($type==Redis::REDIS_ZSET){
-             $db->executeCommand('ZADD',$key,$val);
+             $db->executeCommand('ZADD',$ins);
         }elseif($type==Redis::REDIS_SET){
-             $db->executeCommand('SADD',$key,$val);
+             $db->executeCommand('SADD',$ins);
         }elseif($type==Redis::REDIS_LIST){
-             $db->executeCommand('RPUSH',$key,$val);
+             $db->executeCommand('RPUSH',$ins);
         }else{
             throw new InvalidCallException('Unknown type of data');
         }
