@@ -24,7 +24,7 @@ class Redisman extends \yii\base\Model{
      * Returns the database connection used by this  class.
      * By default, the "redis" application component is used as the database connection.
      * You may override this method if you want to use a different database connection.
-     * @return Connection the database connection used by this  class.
+     * @return \yii\redis\Connection the database connection used by this  class.
      */
     public static function getDb()
     {
