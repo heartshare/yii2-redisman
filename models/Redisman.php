@@ -56,8 +56,8 @@ class Redisman extends Model{
      */
     public static function getAllkeys($group='*'){
         $db=static::getDb();
-        $keys=$db->executeCommand('KEYS',$group);
-        if(is_array($keys)) $keys=[];
+        $keys=$db->executeCommand('KEYS',[$group]);
+        if(!is_array($keys)) $keys=[];
         return $keys;
     }
 
