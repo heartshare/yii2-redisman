@@ -1,11 +1,7 @@
 <?php
+namespace insolita\redisman\controllers;
 
-/**
- * Created by PhpStorm.
- * User: Insolita
- * Date: 17.08.14
- * Time: 11:20
- */
+
 class DefaultController extends \yii\web\Controller
 {
     public function behaviors()
