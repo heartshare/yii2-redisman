@@ -24,6 +24,13 @@ class RedismanModule extends Module
      * @inheritdoc
      */
     public $controllerNamespace = 'insolita\redisman\controllers';
+
+    /**
+     * @var array the the internalization configuration for this module
+     */
+    public $i18n = [];
+
+
     /**
      * @var string $groupDelimiter - разделитель ключа по группам
      */
@@ -34,21 +41,18 @@ class RedismanModule extends Module
     public $grouplistCacheDuration = 3600;
 
     /**
-     * @var array $redises - array of available redis connections
+     * @var array $connections - array of available redis connections
      **/
 
-    public $redises;
+    public $connections;
 
     /**
-     * @var string $defRedis - key of default redis connection (from array $redises)
+     * @var string $defRedis - key of default redis connection (from array $connections)
      **/
 
     public $defRedis = null;
 
-    /**
-     * @var array the the internalization configuration for this module
-     */
-    public $i18n = [];
+
 
     /**
      * @var \yii\redis\Connection $_connect current redis connection
@@ -56,19 +60,19 @@ class RedismanModule extends Module
     private $_connect = null;
 
     /**
-     * @var int $_curdb  selected database
+     * @var int $_dbCurrent  selected database
      **/
-    private $_curdb = 0;
+    private $_dbCurrent = 0;
 
     /**
-     * @var string $_current current redis connection key
+     * @var string $_conCurrent current redis connection key
      **/
-    private $_current = null;
+    private $_conCurrent = null;
 
     /**
-     * @var int $_dbcount count allowed databases
+     * @var int $_dbCount count allowed databases
      **/
-    private $_dbcount = null;
+    private $_dbCount = null;
 
     /**
      * @throws InvalidConfigException
@@ -79,7 +83,7 @@ class RedismanModule extends Module
 
         $this->registerTranslations();
 
-        if (empty($this->redises)) {
+        if (empty($this->connections)) {
             throw new InvalidConfigException(
                 self::t('Wrong module configuration! Please set array of available redis connections')
             );
@@ -96,20 +100,42 @@ class RedismanModule extends Module
      */
     public function connectionList()
     {
-        return array_keys($this->redises);
+        return array_keys($this->connections);
+    }
+
+    /**
+     * @return int
+     */
+    public function getDbCount(){
+        return $this->_dbCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCurrentDb(){
+        return $this->_dbCurrent;
     }
 
     /**
      * @return \yii\redis\Connection
      **/
-    public function getConnection($force = false)
+    public function getConnection($force = false, $db = null)
     {
 
         if (!$this->_connect || $force) {
-            if (!$this->_current) {
-                $this->_current = $this->defRedis;
+            if (!$this->_conCurrent) {
+                $this->_conCurrent = $this->defRedis;
             }
-            $this->_connect = \Yii::createObject($this->redises[$this->_current]);
+            $this->_connect = \Yii::createObject($this->connections[$this->_conCurrent]);
+            $this->_dbCount = $this->_connect->executeCommand('CONFIG',['GET', 'databases']);
+            if(!is_null($db) && $db<=$this->_dbCount && $db!=$this->_connect->database){
+                $this->_connect->select($db);
+                $this->_dbCurrent=$db;
+            }else{
+                $this->_dbCurrent=$this->_connect->database;
+            }
+
         }
         return $this->_connect;
     }
@@ -117,22 +143,26 @@ class RedismanModule extends Module
 
     /**
      * @param $name
-     *
+     * @param $db
      * @return \yii\redis\Connection
      * @throws ErrorException
      */
-    public function setConnection($name)
+    public function setConnection($name, $db=null)
     {
-        if (!isset($this->redises[$name])) {
+        if (!isset($this->connections[$name])) {
             throw new ErrorException(self::t('Wrong redis connection name'));
         } else {
-            $this->_current = $name;
-            $this->_connect = $this->getConnection(true);
+            $this->_conCurrent = $name;
+            $this->_connect = $this->getConnection(true, (int)$db);
             return $this->_connect;
         }
     }
 
+    /**
+     * @return array - formatted info about redis connection
+     **/
     public function dbInfo(){
+        $info=$this->_connect->info();
 
     }
 
