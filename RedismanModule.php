@@ -40,19 +40,18 @@ class RedismanModule extends Module {
     public function registerTranslations()
     {
        \Yii::setAlias('@redisman_messages',__DIR__.'/messages');
-        \Yii::$app->i18n->translations['redisman'] = [
+        \Yii::$app->i18n->translations['insolita/modules/redisman/*'] = [
             'class' => 'yii\i18n\PhpMessageSource',
-            'sourceLanguage' => 'ru',
             'basePath' => '@redisman_messages',
             'fileMap' => [
-                    '*' => 'redisman.php',
+                'insolita/modules/redisman/redisman' => 'redisman.php'
             ],
         ];
     }
     public static function t($message, $params = [], $language = null)
     {
         //return \Yii::t('redisman', $message, $params, $language);
-        return \Yii::t('app', $message, $params, $language);
+        return \Yii::t('insolita/modules/redisman/redisman', $message, $params, $language);
     }
 
 } 
