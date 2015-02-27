@@ -18,7 +18,8 @@ use yii\base\Module;
  *
  * @package insolita\redisman
  */
-class RedismanModule extends Module {
+class RedismanModule extends Module
+{
     /**
      * @inheritdoc
      */
@@ -26,15 +27,15 @@ class RedismanModule extends Module {
     /**
      * @var string $groupDelimiter - разделитель ключа по группам
      */
-    public $groupDelimiter=':';
+    public $groupDelimiter = ':';
     /**
      * @var int $grouplistCacheDuration - Время кеширования списка групп
      */
-    public $grouplistCacheDuration=3600;
+    public $grouplistCacheDuration = 3600;
 
     /**
      * @var array $redises - array of available redis connections
-    **/
+     **/
 
     public $redises;
 
@@ -42,22 +43,32 @@ class RedismanModule extends Module {
      * @var string $defRedis - key of default redis connection (from array $redises)
      **/
 
-    public $defRedis=null;
+    public $defRedis = null;
 
-     /**
+    /**
      * @var array the the internalization configuration for this module
      */
     public $i18n = [];
 
     /**
-     * @var \yii\redis\Connection $_connect current redis connect
-    **/
-    private $_connect=null;
+     * @var \yii\redis\Connection $_connect current redis connection
+     **/
+    private $_connect = null;
+
+    /**
+     * @var int $_curdb  selected database
+     **/
+    private $_curdb = 0;
 
     /**
      * @var string $_current current redis connection key
      **/
-    private $_current=null;
+    private $_current = null;
+
+    /**
+     * @var int $_dbcount count allowed databases
+     **/
+    private $_dbcount = null;
 
     /**
      * @throws InvalidConfigException
@@ -68,11 +79,13 @@ class RedismanModule extends Module {
 
         $this->registerTranslations();
 
-        if(empty($this->redises)){
-            throw new InvalidConfigException(self::t('Wrong module configuration! Please set array of available redis connections'));
+        if (empty($this->redises)) {
+            throw new InvalidConfigException(
+                self::t('Wrong module configuration! Please set array of available redis connections')
+            );
         }
 
-        if(empty($this->defRedis) or !in_array($this->defRedis, $this->connectionList())){
+        if (empty($this->defRedis) or !in_array($this->defRedis, $this->connectionList())) {
             throw new InvalidConfigException(self::t('Wrong module configuration! Wrong configuration defRedis param'));
         }
 
@@ -81,28 +94,46 @@ class RedismanModule extends Module {
     /**
      * @return array
      */
-    public function connectionList(){
+    public function connectionList()
+    {
         return array_keys($this->redises);
     }
 
-    public function getConnection(){
+    /**
+     * @return \yii\redis\Connection
+     **/
+    public function getConnection($force = false)
+    {
 
-        if(!$this->_connect){
-            if(!$this->_current){
-                $this->_current=$this->defRedis;
+        if (!$this->_connect || $force) {
+            if (!$this->_current) {
+                $this->_current = $this->defRedis;
             }
-
+            $this->_connect = \Yii::createObject($this->redises[$this->_current]);
         }
         return $this->_connect;
     }
 
-    public function setConnection($name){
-        if(!isset($this->redises[$name])){
+
+    /**
+     * @param $name
+     *
+     * @return \yii\redis\Connection
+     * @throws ErrorException
+     */
+    public function setConnection($name)
+    {
+        if (!isset($this->redises[$name])) {
             throw new ErrorException(self::t('Wrong redis connection name'));
-        }else{
-            $this->_current=$name;
-            $this->_connect=$this->getConnection();
+        } else {
+            $this->_current = $name;
+            $this->_connect = $this->getConnection(true);
+            return $this->_connect;
         }
+    }
+
+    public function dbInfo(){
+
     }
 
     /**
@@ -110,7 +141,7 @@ class RedismanModule extends Module {
      */
     public function registerTranslations()
     {
-       \Yii::setAlias('@redisman_messages',__DIR__.'/messages');
+        \Yii::setAlias('@redisman_messages', __DIR__ . '/messages');
         \Yii::$app->i18n->translations['insolita/modules/redisman/*'] = [
             'class' => 'yii\i18n\PhpMessageSource',
             'basePath' => '@redisman_messages',
