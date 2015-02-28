@@ -2,7 +2,10 @@
 namespace insolita\redisman\controllers;
 
 
+use insolita\redisman\models\ConnectionForm;
 use insolita\redisman\RedismanModule;
+use yii\filters\VerbFilter;
+use yii\helpers\Html;
 
 class DefaultController extends \yii\web\Controller
 {
@@ -29,6 +32,12 @@ class DefaultController extends \yii\web\Controller
                         'roles' => ['@'],
                     ],
                 ],
+            ],
+            'verbs'=>[
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'switch' => ['post'],
+                ],
             ]
         ];
     }
@@ -54,9 +63,15 @@ class DefaultController extends \yii\web\Controller
 
     }
 
-    public function actionSwitch($name)
+    public function actionSwitch()
     {
-        $this->module->setConnection($name);
+        $model=new ConnectionForm();
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+            $this->module->setConnection($model->connection, $model->db);
+        }else{
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model),false);
+        }
+
         return $this->redirect(['index']);
 
     }
