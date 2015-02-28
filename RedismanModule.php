@@ -98,7 +98,7 @@ class RedismanModule extends Module
         if (empty($this->defRedis) or !in_array($this->defRedis, $this->connectionList())) {
             throw new InvalidConfigException(self::t('Wrong module configuration! Wrong configuration defRedis param'));
         }
-        $this->restoreFromSeesion();
+        $this->restoreFromSession();
         $this->getConnection();
         $this->totalDbCount();
     }

@@ -17,24 +17,9 @@ for($i=0;$i<$module->getDbCount();$i++){
     <div class="header item">
         <?=RedismanModule::t('Connection Settings')?>
     </div>
-    <?php echo Dropdown::widget([
-            'name' => 'redisconnection',
-            'selection' => $module->getCurrentConn(),
-            'search' => false,
-            'fluid' => false,
-            'disabled' => false,
-            'items' => $module->connectionList(),'defaultText' => RedismanModule::t('Choose connection'),
-            'options'=>['id'=>'rediscon','class'=>'item']
-        ]);?>
-    <?php echo Dropdown::widget([
-            'name' => 'redisdb',
-            'selection' => $module->getCurrentDb(),
-            'search' => false,
-            'fluid' => true,
-            'disabled' => true,
-            'items' => $dbselect,'defaultText' => RedismanModule::t('Choose Database'),
-            'options'=>['id'=>'redisdb','class'=>'item']
-        ]);?>
+     <div class="text item">
+         <?=$this->render('_connectform')?>
+     </div>
     <div class="item">
         <div class="ui tiny green button" id="makeconnect"><?=RedismanModule::t('Connect')?></div>
     </div>

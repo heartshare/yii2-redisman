@@ -31,7 +31,7 @@ $this->beginPage();
     <?php $this->beginBody(); ?>
     <?= $controller->renderPartial('@redisman/views/layouts/_topmenu') ?>
     <div class="ui centered padded stackable grid">
-        <div class="three wide column"><?= $controller->renderPartial('@redisman/views/layouts/_menu') ?></div>
+        <div class="four wide column"><?= $controller->renderPartial('@redisman/views/layouts/_menu') ?></div>
         <div class="twelve wide column" id="content"><?= $content ?></div>
     </div>
     <?php $this->endBody(); ?>
