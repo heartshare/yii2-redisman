@@ -35,11 +35,12 @@ class ConnectionForm extends Model{
         return [
             [['connection', 'db'], 'required'],
             [['connection'], 'in','range'=>$this->module->connectionList()],
+            ['db', 'integer'],
             ['db', 'validateDb'],
         ];
     }
 
-    public function attributes(){
+    public function attributeLabels(){
         return [
             'connection'=>RedismanModule::t('Connection'),
             'db'=>RedismanModule::t('Database')

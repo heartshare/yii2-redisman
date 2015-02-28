@@ -6,6 +6,7 @@ use insolita\redisman\models\ConnectionForm;
 use insolita\redisman\RedismanModule;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
+use yii\helpers\VarDumper;
 
 class DefaultController extends \yii\web\Controller
 {
@@ -67,7 +68,9 @@ class DefaultController extends \yii\web\Controller
     {
         $model=new ConnectionForm();
         if($model->load(\Yii::$app->request->post()) && $model->validate()){
+            \Yii::info(VarDumper::dumpAsString($model->getAttributes()));
             $this->module->setConnection($model->connection, $model->db);
+            \Yii::$app->session->setFlash('success', RedismanModule::t('Switched to').$this->module->getCurrentName(),false);
         }else{
             \Yii::$app->session->setFlash('error', Html::errorSummary($model),false);
         }

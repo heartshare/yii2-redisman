@@ -14,7 +14,7 @@ $model->db=$module->getCurrentDb();
 ?>
 <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
     [
-        'id' => 'login-form', 'options' => ['class' => 'ui form attached fluid segment'],
+        'id' => 'login-form', 'options' => ['class' => 'ui form attached fluid'],
         'enableClientValidation'=>true,
         'method'=>'post',
         'action'=>\yii\helpers\Url::to(['/redisman/default/switch'])

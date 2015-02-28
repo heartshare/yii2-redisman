@@ -13,16 +13,14 @@ for($i=0;$i<$module->getDbCount();$i++){
 }
  ?>
 
-<div class="ui vertical menu">
+<div class="ui vertical menu fluid">
     <div class="header item">
         <?=RedismanModule::t('Connection Settings')?>
     </div>
      <div class="text item">
          <?=$this->render('_connectform')?>
      </div>
-    <div class="item">
-        <div class="ui tiny green button" id="makeconnect"><?=RedismanModule::t('Connect')?></div>
-    </div>
+
     <div class="item">
         <a><b>Your Profile</b></a>
         <div class="menu">

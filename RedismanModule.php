@@ -12,7 +12,6 @@ namespace insolita\redisman;
 use yii\base\ErrorException;
 use yii\base\InvalidConfigException;
 use yii\base\Module;
-use yii\caching\TagDependency;
 
 /**
  * Class RedismanModule
@@ -37,7 +36,7 @@ class RedismanModule extends Module
      */
     public $groupDelimiter = ':';
     /**
-     * @var int|string $grouplistCacheDuration - Время кеширования списка групп (можно указать session для кеширования в сессии)
+     * @var int $grouplistCacheDuration - Время кеширования списка групп
      */
     public $grouplistCacheDuration = 3600;
 
@@ -99,7 +98,7 @@ class RedismanModule extends Module
             throw new InvalidConfigException(self::t('Wrong module configuration! Wrong configuration defRedis param'));
         }
         $this->restoreFromSession();
-        $this->getConnection();
+        $this->getConnection(false, $this->_dbCurrent);
         $this->totalDbCount();
     }
 
@@ -188,7 +187,7 @@ class RedismanModule extends Module
             throw new ErrorException(self::t('Wrong redis connection name'));
         } else {
             $this->_conCurrent = $name;
-            $this->_connect = $this->getConnection(true, (int)$db);
+            $this->_connect = $this->getConnection(true, $db);
             \Yii::$app->session->set('RedisManager_conCurrent', $this->_conCurrent);
             \Yii::$app->session->set('RedisManager_dbCurrent', $this->_dbCurrent);
             return $this->_connect;
@@ -235,6 +234,25 @@ class RedismanModule extends Module
         }
         return $this->_totalDbCount;
     }
+
+    public function getGrouplist(){
+        if(($gl=\Yii::$app->cache->get('RedisManager_grouplists'))==false){
+            $gl=array();
+            $keys=$this->_connect->keys('*');
+            if(!empty($keys) && is_array($keys)){
+                foreach($keys as $key){
+                    $kp=explode($this->groupDelimiter,$key);
+                    $gl[$kp[0]]=$kp[0];
+                }
+            }
+            $gl=array_unique($gl);
+            \Yii::$app->cache->set('RedisManager_grouplists',$gl,$this->grouplistCacheDuration);
+        }else{
+            $gl=unserialize($gl);
+        }
+        return $gl;
+    }
+
     public function registerTranslations()
     {
         \Yii::setAlias('@redisman_messages', __DIR__ . '/messages');
