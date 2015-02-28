@@ -38,6 +38,7 @@ class DefaultController extends \yii\web\Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'switch' => ['post'],
+                    'flushdb' => ['post'],
                 ],
             ]
         ];
@@ -89,7 +90,7 @@ class DefaultController extends \yii\web\Controller
         }
     }
 
-    public function actionflushDb(){
+    public function actionFlushdb(){
         $this->_conn->flushdb();
         if(\Yii::$app->request->isAjax){
             echo 'ok';

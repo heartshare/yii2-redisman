@@ -11,4 +11,5 @@ return [
     'REDIS_SET'=>'Набор',
     'REDIS_ZSET'=>'Множество',
     'REDIS_LIST'=>'Список',
+    'REDIS_UNDEFINED'=>'---'
 ];

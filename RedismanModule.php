@@ -20,6 +20,14 @@ use yii\base\Module;
  */
 class RedismanModule extends Module
 {
+
+    const REDIS_STRING = 'string';
+    const REDIS_LIST = 'list';
+    const REDIS_HASH = 'hash';
+    const REDIS_SET = 'set';
+    const REDIS_ZSET = 'zset';
+    const REDIS_NONE = 'none';
+
     /**
      * @inheritdoc
      */
@@ -30,7 +38,7 @@ class RedismanModule extends Module
      */
     public $i18n = [];
 
-    public $layout='main';
+    public $layout = 'main';
 
 
     /**
@@ -51,7 +59,7 @@ class RedismanModule extends Module
     private $_connect = null;
 
     /**
-     * @var int $_dbCurrent  selected database
+     * @var int $_dbCurrent selected database
      **/
     private $_dbCurrent = 0;
 
@@ -68,23 +76,26 @@ class RedismanModule extends Module
     /**
      * @var array $_totalDbCount session_cached counters for all connections
      **/
-    private $_totalDbCount=[];
+    private $_totalDbCount = [];
 
     /**
      * @var array $_pattern - search pattern
      **/
-    private $_pattern=null;
+    private $_pattern = null;
 
 
     /**
      * @var array
      */
-    public static $types=array(
-        \Redis::REDIS_STRING=>'REDIS_STRING',
-        \Redis::REDIS_SET=>'REDIS_SET',
-        \Redis::REDIS_LIST=>'REDIS_LIST',
-        \Redis::REDIS_ZSET=>'REDIS_ZSET',
-        \Redis::REDIS_HASH=>'REDIS_HASH');
+    public static $types
+        = array(
+            'none' => 'REDIS_UNDEFINED',
+            'string' => 'REDIS_STRING',
+            'set' => 'REDIS_SET',
+            'list' => 'REDIS_LIST',
+            'zset' => 'REDIS_ZSET',
+            'hash' => 'REDIS_HASH'
+        );
 
     /**
      * @throws InvalidConfigException
@@ -114,8 +125,8 @@ class RedismanModule extends Module
      */
     public function connectionList()
     {
-        $k= array_keys($this->connections);
-        return array_combine($k,$k);
+        $k = array_keys($this->connections);
+        return array_combine($k, $k);
     }
 
     /**
@@ -123,9 +134,9 @@ class RedismanModule extends Module
      */
     public function dbList()
     {
-        $dblist=[];
-        for($i=0;$i<$this->_dbCount;$i++){
-            $dblist[$i]='Db №'.$i;
+        $dblist = [];
+        for ($i = 0; $i < $this->_dbCount; $i++) {
+            $dblist[$i] = 'Db №' . $i;
         }
         return $dblist;
     }
@@ -133,29 +144,33 @@ class RedismanModule extends Module
     /**
      * @return int
      */
-    public function getDbCount(){
+    public function getDbCount()
+    {
         return $this->_dbCount;
     }
 
     /**
      * @return int
      */
-    public function getCurrentDb(){
+    public function getCurrentDb()
+    {
         return $this->_dbCurrent;
     }
 
     /**
      * @return string
      */
-    public function getCurrentConn(){
+    public function getCurrentConn()
+    {
         return $this->_conCurrent;
     }
 
     /**
      * @return string
      */
-    public function getCurrentName(){
-        return ucfirst($this->_conCurrent).' db#'.$this->_dbCurrent.' ['.$this->_connect->hostname.']';
+    public function getCurrentName()
+    {
+        return ucfirst($this->_conCurrent) . ' db#' . $this->_dbCurrent . ' [' . $this->_connect->hostname . ']';
     }
 
     /**
@@ -169,12 +184,12 @@ class RedismanModule extends Module
                 $this->_conCurrent = $this->defRedis;
             }
             $this->_connect = \Yii::createObject($this->connections[$this->_conCurrent]);
-            $this->_dbCount = $this->_connect->executeCommand('CONFIG',['GET', 'databases'])[1];
-            if(!is_null($db) && $db<=$this->_dbCount && $db!=$this->_connect->database){
+            $this->_dbCount = $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])[1];
+            if (!is_null($db) && $db <= $this->_dbCount && $db != $this->_connect->database) {
                 $this->_connect->select($db);
-                $this->_dbCurrent=$db;
-            }else{
-                $this->_dbCurrent=$this->_connect->database;
+                $this->_dbCurrent = $db;
+            } else {
+                $this->_dbCurrent = $this->_connect->database;
             }
 
         }
@@ -185,10 +200,11 @@ class RedismanModule extends Module
     /**
      * @param $name
      * @param $db
+     *
      * @return \yii\redis\Connection
      * @throws ErrorException
      */
-    public function setConnection($name, $db=null)
+    public function setConnection($name, $db = null)
     {
         if (!isset($this->connections[$name])) {
             throw new ErrorException(self::t('Wrong redis connection name'));
@@ -204,42 +220,46 @@ class RedismanModule extends Module
     /**
      *
      */
-    public function restoreFromSession(){
-         $this->_conCurrent=\Yii::$app->session->get('RedisManager_conCurrent', $this->defRedis);
-         $this->_dbCurrent=\Yii::$app->session->get('RedisManager_dbCurrent', 0);
-         $this->_pattern=\Yii::$app->session->get('RedisManager_pattern', null);
+    public function restoreFromSession()
+    {
+        $this->_conCurrent = \Yii::$app->session->get('RedisManager_conCurrent', $this->defRedis);
+        $this->_dbCurrent = \Yii::$app->session->get('RedisManager_dbCurrent', 0);
+        $this->_pattern = \Yii::$app->session->get('RedisManager_pattern', null);
     }
 
     /**
      * @param $pattern
      */
-    public function setPattern($pattern){
-        $this->_pattern=$pattern;
+    public function setPattern($pattern)
+    {
+        $this->_pattern = $pattern;
         \Yii::$app->session->set('RedisManager_pattern', $pattern);
     }
 
     /**
      * @return mixed
      */
-    public function searchKeys(){
-        $keys=$this->_rconn->keys($this->_pattern);
+    public function searchKeys()
+    {
+        $keys = $this->_rconn->keys($this->_pattern);
         return $keys;
     }
 
     /**
      * @return array - formatted info about redis connection
      **/
-    public function dbInfo(){
-        $info=$this->_connect->info('all');
-        $info=explode("\r\n", $info);
-        $infoex=[];
-        $section='Undefined';
-        foreach($info as $line){
-            if(strpos($line, '#')!==false){
-                $section=trim(str_replace('#','',$line));
-            }elseif(strpos($line, ':')!==false){
-                list($key, $val)=explode(':',$line);
-                $infoex[$section][trim($key)]=trim($val);
+    public function dbInfo()
+    {
+        $info = $this->_connect->info('all');
+        $info = explode("\r\n", $info);
+        $infoex = [];
+        $section = 'Undefined';
+        foreach ($info as $line) {
+            if (strpos($line, '#') !== false) {
+                $section = trim(str_replace('#', '', $line));
+            } elseif (strpos($line, ':') !== false) {
+                list($key, $val) = explode(':', $line);
+                $infoex[$section][trim($key)] = trim($val);
             }
         }
         return $infoex;
@@ -249,18 +269,19 @@ class RedismanModule extends Module
      * @return array
      * @throws InvalidConfigException
      */
-    public function totalDbCount(){
-        if(!$this->_totalDbCount){
-            $cached=\Yii::$app->session->get('RedisManager_totalDbItem');
-            if(is_array($cached)){
-                $this->_totalDbCount=$cached;
-            }else{
-                foreach($this->connectionList() as $item){
+    public function totalDbCount()
+    {
+        if (!$this->_totalDbCount) {
+            $cached = \Yii::$app->session->get('RedisManager_totalDbItem');
+            if (is_array($cached)) {
+                $this->_totalDbCount = $cached;
+            } else {
+                foreach ($this->connectionList() as $item) {
                     $cn = \Yii::createObject($this->connections[$item]);
-                    $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG',['GET', 'databases'])[1];
+                    $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];
                     $cn->close();
                 }
-                \Yii::$app->session->set('RedisManager_totalDbItem',$this->_totalDbCount);
+                \Yii::$app->session->set('RedisManager_totalDbItem', $this->_totalDbCount);
             }
         }
         return $this->_totalDbCount;
@@ -286,62 +307,78 @@ class RedismanModule extends Module
      *
      * @return bool
      */
-    public static function keyTyper($type){
-        if(isset(self::$types[$type])){
+    public static function keyTyper($type)
+    {
+        if (isset(self::$types[$type])) {
             return self::t(self::$types[$type]);
-        }else{
+        } else {
             return false;
         }
     }
 
-    public function getKeyType($key){
-        $type=$this->_connect->type($key);
-        return self::keyTyper($type);
-    }
     /**
      * @param $key
      *
      * @return bool
      */
-    public function getKeyVal($key){
-        $type=$this->_connect->type($key);
-        if($type==\Redis::REDIS_STRING){
+    public function getKeyType($key)
+    {
+        $type = $this->_connect->type($key);
+        return self::keyTyper($type);
+    }
+
+    /**
+     * @param $key
+     *
+     * @return bool
+     */
+    public function getKeyVal($key)
+    {
+        $type = $this->_connect->type($key);
+        if ($type == self::REDIS_STRING) {
             return $this->_connect->get($key);
-        }elseif($type==\Redis::REDIS_HASH){
+        } elseif ($type == self::REDIS_HASH) {
             return $this->_connect->hgetall($key);
-        }elseif($type==\Redis::REDIS_ZSET){
-            return $this->_connect->zrevrange($key,0,-1);
-        }elseif($type==\Redis::REDIS_SET){
+        } elseif ($type == self::REDIS_ZSET) {
+            return $this->_connect->zrange($key, 0, -1,'withscores');
+        } elseif ($type == self::REDIS_SET) {
             return $this->_connect->smembers($key);
-        }elseif($type==\Redis::REDIS_LIST){
-            return $this->_connect->lrange($key,0,-1);
-        }else{
+        } elseif ($type == self::REDIS_LIST) {
+            return $this->_connect->lrange($key, 0, -1);
+        } else {
             return false;
         }
     }
 
-    public function addKey($type,$key,$value){
-        if($type==\Redis::REDIS_STRING){
-            $this->_connect->set($key,$value);
-        }elseif($type==\Redis::REDIS_LIST){
-            if(is_string($value)){
-                $this->_connect->rpush($key,$value);
-            }elseif(is_array($value)){
-                foreach($value as $item){
-                    if(is_string($item)){
-                        $this->_connect->rpush($key,$item);
-                    }
-                }
+    /**
+     * @param int    $type
+     * @param string $key
+     * @param (string|array)$value
+     *
+     * @return boolean
+     */
+    public function addKey($type, $key, $value)
+    {
+        if ($type == self::REDIS_STRING) {
+            return $this->_connect->set($key, $value);
+        } elseif(is_array($value)) {
+            array_unshift($value, $key);
+            if ($type == self::REDIS_LIST) {
+                return $this->_connect->executeCommand('RPUSH', $value);
+            } elseif ($type == self::REDIS_SET) {
+                return $this->_connect->executeCommand('SADD', $value);
+            } elseif ($type == self::REDIS_ZSET) {
+                return $this->_connect->executeCommand('ZADD', $value);
+            } elseif ($type == self::REDIS_HASH) {
+                return $this->_connect->executeCommand('HMSET', $value);
+            } else {
+                return false;
             }
 
-        }elseif($type==\Redis::REDIS_SET){
-            $this->_connect->sadd($key,$value);
-        }elseif($type==\Redis::REDIS_ZSET){
-            $this->_connect->zadd($key,$value);
-        }elseif($type==\Redis::REDIS_HASH){
-
-            $this->_connect->hmset($key,$value);
+        } else {
+            return false;
         }
+
     }
     /*public function keyDataProvider($group='*'){
         if(($rediskeys=Yii::app()->cache->get('rediskeys_'.$group))==false){
