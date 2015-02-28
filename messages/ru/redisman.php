@@ -5,4 +5,10 @@
  * Date: 17.08.14
  * Time: 13:57
  */
-return [];
+return [
+    'REDIS_HASH'=>'Хеш',
+    'REDIS_STRING'=>'Строка',
+    'REDIS_SET'=>'Набор',
+    'REDIS_ZSET'=>'Множество',
+    'REDIS_LIST'=>'Список',
+];

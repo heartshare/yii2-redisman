@@ -31,14 +31,7 @@ class RedismanModule extends Module
     public $i18n = [];
 
     public $layout='main';
-    /**
-     * @var string $groupDelimiter - разделитель ключа по группам
-     */
-    public $groupDelimiter = ':';
-    /**
-     * @var int $grouplistCacheDuration - Время кеширования списка групп
-     */
-    public $grouplistCacheDuration = 3600;
+
 
     /**
      * @var array $connections - array of available redis connections
@@ -51,8 +44,6 @@ class RedismanModule extends Module
      **/
 
     public $defRedis = null;
-
-
 
     /**
      * @var \yii\redis\Connection $_connect current redis connection
@@ -78,6 +69,22 @@ class RedismanModule extends Module
      * @var array $_totalDbCount session_cached counters for all connections
      **/
     private $_totalDbCount=[];
+
+    /**
+     * @var array $_pattern - search pattern
+     **/
+    private $_pattern=null;
+
+
+    /**
+     * @var array
+     */
+    public static $types=array(
+        \Redis::REDIS_STRING=>'REDIS_STRING',
+        \Redis::REDIS_SET=>'REDIS_SET',
+        \Redis::REDIS_LIST=>'REDIS_LIST',
+        \Redis::REDIS_ZSET=>'REDIS_ZSET',
+        \Redis::REDIS_HASH=>'REDIS_HASH');
 
     /**
      * @throws InvalidConfigException
@@ -194,9 +201,29 @@ class RedismanModule extends Module
         }
     }
 
+    /**
+     *
+     */
     public function restoreFromSession(){
          $this->_conCurrent=\Yii::$app->session->get('RedisManager_conCurrent', $this->defRedis);
          $this->_dbCurrent=\Yii::$app->session->get('RedisManager_dbCurrent', 0);
+         $this->_pattern=\Yii::$app->session->get('RedisManager_pattern', null);
+    }
+
+    /**
+     * @param $pattern
+     */
+    public function setPattern($pattern){
+        $this->_pattern=$pattern;
+        \Yii::$app->session->set('RedisManager_pattern', $pattern);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function searchKeys(){
+        $keys=$this->_rconn->keys($this->_pattern);
+        return $keys;
     }
 
     /**
@@ -218,6 +245,10 @@ class RedismanModule extends Module
         return $infoex;
     }
 
+    /**
+     * @return array
+     * @throws InvalidConfigException
+     */
     public function totalDbCount(){
         if(!$this->_totalDbCount){
             $cached=\Yii::$app->session->get('RedisManager_totalDbItem');
@@ -235,24 +266,9 @@ class RedismanModule extends Module
         return $this->_totalDbCount;
     }
 
-    public function getGrouplist(){
-        if(($gl=\Yii::$app->cache->get('RedisManager_grouplists'))==false){
-            $gl=array();
-            $keys=$this->_connect->keys('*');
-            if(!empty($keys) && is_array($keys)){
-                foreach($keys as $key){
-                    $kp=explode($this->groupDelimiter,$key);
-                    $gl[$kp[0]]=$kp[0];
-                }
-            }
-            $gl=array_unique($gl);
-            \Yii::$app->cache->set('RedisManager_grouplists',$gl,$this->grouplistCacheDuration);
-        }else{
-            $gl=unserialize($gl);
-        }
-        return $gl;
-    }
-
+    /**
+     *
+     */
     public function registerTranslations()
     {
         \Yii::setAlias('@redisman_messages', __DIR__ . '/messages');
@@ -264,6 +280,88 @@ class RedismanModule extends Module
             ],
         ];
     }
+
+    /**
+     * @param int $type
+     *
+     * @return bool
+     */
+    public static function keyTyper($type){
+        if(isset(self::$types[$type])){
+            return self::t(self::$types[$type]);
+        }else{
+            return false;
+        }
+    }
+
+    public function getKeyType($key){
+        $type=$this->_connect->type($key);
+        return self::keyTyper($type);
+    }
+    /**
+     * @param $key
+     *
+     * @return bool
+     */
+    public function getKeyVal($key){
+        $type=$this->_connect->type($key);
+        if($type==\Redis::REDIS_STRING){
+            return $this->_connect->get($key);
+        }elseif($type==\Redis::REDIS_HASH){
+            return $this->_connect->hgetall($key);
+        }elseif($type==\Redis::REDIS_ZSET){
+            return $this->_connect->zrevrange($key,0,-1);
+        }elseif($type==\Redis::REDIS_SET){
+            return $this->_connect->smembers($key);
+        }elseif($type==\Redis::REDIS_LIST){
+            return $this->_connect->lrange($key,0,-1);
+        }else{
+            return false;
+        }
+    }
+
+    public function addKey($type,$key,$value){
+        if($type==\Redis::REDIS_STRING){
+            $this->_connect->set($key,$value);
+        }elseif($type==\Redis::REDIS_LIST){
+            if(is_string($value)){
+                $this->_connect->rpush($key,$value);
+            }elseif(is_array($value)){
+                foreach($value as $item){
+                    if(is_string($item)){
+                        $this->_connect->rpush($key,$item);
+                    }
+                }
+            }
+
+        }elseif($type==\Redis::REDIS_SET){
+            $this->_connect->sadd($key,$value);
+        }elseif($type==\Redis::REDIS_ZSET){
+            $this->_connect->zadd($key,$value);
+        }elseif($type==\Redis::REDIS_HASH){
+
+            $this->_connect->hmset($key,$value);
+        }
+    }
+    /*public function keyDataProvider($group='*'){
+        if(($rediskeys=Yii::app()->cache->get('rediskeys_'.$group))==false){
+            $rediskeys=array();
+            $group=($group!='*')?$group.'*':'*';
+            $keys=$this->getAllKeys($group);
+            if(!empty($keys) && is_array($keys)){
+                natcasesort($keys);
+                foreach($keys as $key){
+                    $rediskeys[]=array('id'=>$key,'type'=>$this->getType($key),'ttl'=>$this->getTtl($key));
+                }
+            }
+            Yii::app()->cache->set('rediskeys',serialize($rediskeys),7200);
+        }else{
+            $rediskeys=unserialize($rediskeys);
+        }
+        $dp=new CArrayDataProvider($rediskeys,array('id'=>'id',
+                'pagination'=>array('pageSize'=>300)));
+        return $dp;
+    }*/
 
     /**
      * @param       $message

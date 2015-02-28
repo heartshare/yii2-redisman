@@ -20,7 +20,12 @@ for($i=0;$i<$module->getDbCount();$i++){
      <div class="text item">
          <?=$this->render('_connectform')?>
      </div>
-
+    <div class="header item">
+        <?=RedismanModule::t('Search Key')?>
+    </div>
+    <div class="text item">
+        <?=$this->render('_searchform')?>
+    </div>
     <div class="item">
         <a><b>Your Profile</b></a>
         <div class="menu">
