@@ -94,8 +94,8 @@ class SearchModel extends Model
 
     public function search($params)
     {
-       $page=ArrayHelper::getValue($params,'page',0);
-       $start=$page*$this->perpage;
+       $page=ArrayHelper::getValue($params,'page',1);
+       $start=($page-1)*$this->perpage;
        $end= $start+$this->perpage;
 
         $data=null;
@@ -121,20 +121,28 @@ class SearchModel extends Model
             $totalcount=0;
         }
 
-
-       return new ArrayDataProvider([
+        return new PartialDataProvider([
+                'key'=>'id',
+                'allModels'=>$allModels,
+                'totalCount'=>$totalcount,
+                'pagination'=>[
+                    'totalCount'=>$totalcount,
+                    'pageSize' => $this->perpage,
+                ]
+            ]);
+      /* return new ArrayDataProvider([
                'key'=>'id',
                'allModels'=>$allModels,
                'pagination'=>[
                    'totalCount'=>$totalcount,
                    'pageSize' => $this->perpage,
                ]
-           ]);
+           ]);*/
     }
 
     public function storeFilter(){
         if($this->validate()){
-            \Yii::$app->session->set('RedisManager_searchModel', $this->getAttributes());
+            \Yii::$app->session->set('RedisManager_searchModel', $this->getAttributes(), $this->module->queryCacheDuration);
             return true;
         }else{
             return false;
