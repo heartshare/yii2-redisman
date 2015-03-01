@@ -85,6 +85,7 @@ class DefaultController extends \yii\web\Controller
         if($model->load(\Yii::$app->request->post()) && $model->validate()){
             \Yii::info(VarDumper::dumpAsString($model->getAttributes()));
             $this->module->setConnection($model->connection, $model->db);
+            SearchModel::resetFilter();
             \Yii::$app->session->setFlash('success', RedismanModule::t('Switched to').$this->module->getCurrentName(),false);
         }else{
             \Yii::$app->session->setFlash('error', Html::errorSummary($model),false);

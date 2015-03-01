@@ -46,13 +46,13 @@ class SearchModel extends Model
             [['type'], 'default', 'value' => ['string', 'set', 'hash', 'zset', 'list']],
             [['pattern'], 'default', 'value' => '*:*'],
             [['perpage'], 'default', 'value' => 20],
-            ['encache', 'value' => 0],
+            ['encache','default', 'value' => 0],
             [['pattern'], 'trim'],
-            ['encache', 'in','range' => [0,1]],
+            [['encache'], 'in','range' => [0,1]],
             [['type'], 'typeValidatior'],
             [
                 'pattern', 'filter', 'filter'=>function ($val) {
-                return "'" . addcslashes(str_replace("'", "\\'", $val), "\000\n\r\\\032") . "'";
+                return addcslashes(str_replace("'", "\\'", $val), "\000\n\r\\\032");
             }
             ],
             ['pattern', 'string', 'min' => 1, 'max' => 300],
@@ -83,7 +83,8 @@ class SearchModel extends Model
         return [
             'pattern' => RedismanModule::t('Search pattern'),
             'type' => RedismanModule::t('Type'),
-            'perpage' => RedismanModule::t('Per page'),
+            'perpage' => RedismanModule::t('Page Size'),
+            'encache' => RedismanModule::t('Enable query caching?'),
         ];
     }
 
@@ -94,7 +95,8 @@ class SearchModel extends Model
     public function search($params)
     {
        $page=ArrayHelper::getValue($params,'page',0);
-       $offset=$page*$this->perpage+1;
+       $start=$page*$this->perpage;
+       $end= $start+$this->perpage;
 
         $data=null;
         if($this->encache){
@@ -102,7 +104,7 @@ class SearchModel extends Model
         }
         if(!$data){
             $conn=$this->module->getConnection();
-            $queryScript=$this->scriptBuilder($page, $offset);
+            $queryScript=$this->scriptBuilder($start, $end);
             $data=$conn->executeCommand('EVAL', [$queryScript,0]);
         }
         if(!empty($data)){
@@ -116,12 +118,17 @@ class SearchModel extends Model
             }
         }else{
             $allModels=[];
+            $totalcount=0;
         }
 
 
        return new ArrayDataProvider([
                'key'=>'id',
-               'allModels'=>$allModels
+               'allModels'=>$allModels,
+               'pagination'=>[
+                   'totalCount'=>$totalcount,
+                   'pageSize' => $this->perpage,
+               ]
            ]);
     }
 
@@ -138,9 +145,12 @@ class SearchModel extends Model
         if($data=\Yii::$app->session->get('RedisManager_searchModel',null)){
             $this->setAttributes($data);
         }else{
-            $this->setAttributes([]);
+
             $this->validate();
         }
+    }
+    public static function resetFilter(){
+        \Yii::$app->session->set('RedisManager_searchModel', null);
     }
 
     public  function typeCondBuiler()
@@ -162,7 +172,7 @@ class SearchModel extends Model
         return $typecond;
     }
 
-    protected function scriptBuilder($page, $offset)
+    protected function scriptBuilder($start, $end)
     {
         $typecond=$this->typeCondBuiler();
         $script=<<<EOF
@@ -179,7 +189,7 @@ repeat
     keys = result[2];
     for i, key in ipairs(keys) do
         tp=redis.call("TYPE", key)["ok"]
-        if #all_keys<{$this->perpage} then
+        if #all_keys>=$start and #all_keys<$end then
            if $typecond then
                if tp == "string" then
                    size=redis.call("STRLEN", key)
@@ -210,4 +220,51 @@ return all_keys;
 EOF;
         return $script;
     }
-} 
+
+protected function scriptBuilderGreedy()
+{
+    $typecond=$this->typeCondBuiler();
+    $script=<<<EOF
+local all_keys = {};
+local keys = {};
+local done = false;
+local cursor = "0"
+local count=0;
+local size=0
+local tp
+repeat
+    local result = redis.call("SCAN", cursor, "match", "{$this->pattern}", "count", 50)
+    cursor = result[1];
+    keys = result[2];
+    for i, key in ipairs(keys) do
+        tp=redis.call("TYPE", key)["ok"]
+           if $typecond then
+               if tp == "string" then
+                   size=redis.call("STRLEN", key)
+                elseif tp == "hash" then
+                    size=redis.call("HLEN", key)
+                elseif tp == "list" then
+                    size=redis.call("LLEN", key)
+                elseif tp == "set" then
+                    size=redis.call("SCARD", key)
+                elseif tp == "zset" then
+                    size=redis.call("ZCARD", key)
+                else
+                    size=9999
+                end
+               all_keys[#all_keys+1] = {key, tp, size, redis.call("TTL", key)};
+           end
+        if $typecond then
+           count=count+1
+        end
+    end
+    if cursor == "0" then
+        done = true;
+    end
+until done
+all_keys[#all_keys+1]=count;
+return all_keys;
+EOF;
+    return $script;
+}
+}

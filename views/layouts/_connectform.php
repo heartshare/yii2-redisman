@@ -36,8 +36,8 @@ $model->db = $module->getCurrentDb();
         <?= $form->field($model, 'db')->dropDownList($module->dbList(), ['id' => 'currentdb']) ?>
     </div>
 <?= Elements::button(
-    '<i class="sign in icon"></i>' . Yii::t('app', 'Login'),
-    ['class' => 'green tiny', 'type' => 'submit', 'tag' => 'button']
+    '<i class="sign in icon"></i>' . \insolita\redisman\RedismanModule::t('Connect'),
+    ['class' => 'green icon circular tiny button', 'type' => 'submit', 'tag' => 'button']
 ) ?>
 <?php ActiveForm::end(); ?>
 <?php
