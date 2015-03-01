@@ -48,7 +48,7 @@ class SearchModel extends Model
             [['perpage'], 'default', 'value' => 20],
             ['encache','default', 'value' => 0],
             [['pattern'], 'trim'],
-            [['encache'], 'in','range' => [0,1]],
+            [['encache'], 'boolean'],
             [['type'], 'typeValidatior'],
             [
                 'pattern', 'filter', 'filter'=>function ($val) {
@@ -89,7 +89,8 @@ class SearchModel extends Model
     }
 
     public function getSearchId(){
-        return $this->pattern.':'.implode('',$this->type).":".$this->perpage.":".$this->module->getCurrentConn().":".$this->module->getCurrentDb();
+        return $this->pattern.':'.implode('',$this->type).":".$this->perpage.":"
+               .$this->module->getCurrentConn().":".$this->module->getCurrentDb().':'.$this->module->greedySearch;
     }
 
     public function search($params)
@@ -97,31 +98,34 @@ class SearchModel extends Model
        $page=ArrayHelper::getValue($params,'page',1);
        $start=($page-1)*$this->perpage;
        $end= $start+$this->perpage;
-
+        echo $page.'|'.$start.'/'.$end.' - cache='.$this->encache.'<br/>';
+        echo $this->getSearchId().'//';
         $data=null;
         if($this->encache){
             $data=\Yii::$app->cache->get($this->getSearchId().':'.$page, null);
         }
         if(!$data){
             $conn=$this->module->getConnection();
-            $queryScript=$this->scriptBuilder($start, $end);
+            $queryScript=(!$this->module->greedySearch)?$this->scriptBuilder($start, $end):$this->scriptBuilderGreedy();
             $data=$conn->executeCommand('EVAL', [$queryScript,0]);
+
         }
         if(!empty($data)){
             $totalcount=array_pop($data);
             $allModels=[];
             foreach($data as $i=>$row){
-                $allModels[]=['id'=>$i,'key'=>$row[0],'type'=>$row[1],'size'=>$row[2],'ttl'=>$row[3]];
+                $allModels[]=['id'=>$start+$i,'key'=>$row[0],'type'=>$row[1],'size'=>$row[2],'ttl'=>$row[3]];
             }
+            echo count($data).'||'.count($allModels);
             if($this->encache){
-                $data=\Yii::$app->cache->set($this->getSearchId().':'.$page, $allModels);
+               \Yii::$app->cache->set($this->getSearchId().':'.$page, $allModels, $this->module->queryCacheDuration);
             }
         }else{
             $allModels=[];
             $totalcount=0;
         }
 
-        return new PartialDataProvider([
+        return (!$this->module->greedySearch)?new PartialDataProvider([
                 'key'=>'id',
                 'allModels'=>$allModels,
                 'totalCount'=>$totalcount,
@@ -129,20 +133,19 @@ class SearchModel extends Model
                     'totalCount'=>$totalcount,
                     'pageSize' => $this->perpage,
                 ]
-            ]);
-      /* return new ArrayDataProvider([
+            ]):new ArrayDataProvider([
                'key'=>'id',
                'allModels'=>$allModels,
                'pagination'=>[
                    'totalCount'=>$totalcount,
                    'pageSize' => $this->perpage,
                ]
-           ]);*/
+           ]);
     }
 
     public function storeFilter(){
         if($this->validate()){
-            \Yii::$app->session->set('RedisManager_searchModel', $this->getAttributes(), $this->module->queryCacheDuration);
+            \Yii::$app->session->set('RedisManager_searchModel', $this->getAttributes());
             return true;
         }else{
             return false;
@@ -161,7 +164,7 @@ class SearchModel extends Model
         \Yii::$app->session->set('RedisManager_searchModel', null);
     }
 
-    public  function typeCondBuiler()
+    public  function typeCondBuilder()
     {
         $typecond = "";
         if (count($this->type) == 5) {
@@ -182,7 +185,7 @@ class SearchModel extends Model
 
     protected function scriptBuilder($start, $end)
     {
-        $typecond=$this->typeCondBuiler();
+        $typecond=$this->typeCondBuilder();
         $script=<<<EOF
 local all_keys = {};
 local keys = {};
@@ -197,7 +200,7 @@ repeat
     keys = result[2];
     for i, key in ipairs(keys) do
         tp=redis.call("TYPE", key)["ok"]
-        if #all_keys>=$start and #all_keys<$end then
+        if count>=$start and count<$end then
            if $typecond then
                if tp == "string" then
                    size=redis.call("STRLEN", key)
@@ -231,7 +234,7 @@ EOF;
 
 protected function scriptBuilderGreedy()
 {
-    $typecond=$this->typeCondBuiler();
+    $typecond=$this->typeCondBuilder();
     $script=<<<EOF
 local all_keys = {};
 local keys = {};

@@ -60,6 +60,16 @@ class RedismanModule extends Module
     public $queryCacheDuration = 600;
 
     /**
+     * @var string $searchMethod - May be SCAN or KEYS(not recommended for large Database)
+     **/
+    public $searchMethod='SCAN';
+
+    /**
+     * @var boolean $greedySearch - if true - all search results will be loaded, else - only for current page (but still  all keys will be scanned for correct pagination)
+     **/
+    public $greedySearch=false;
+
+    /**
      * @var \yii\redis\Connection $_connect current redis connection
      **/
     private $_connect = null;

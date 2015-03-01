@@ -36,7 +36,7 @@ $model->restoreFilter();
             ])?>
     </div>
     <div class="one">
-        <?= $form->field($model, 'perpage')->dropDownList([15=>15,30=>30,50=>50,100=>100,200=>200,500=>500])?>
+        <?= $form->field($model, 'perpage')->dropDownList([20=>20,30=>30,50=>50,100=>100,200=>200,500=>500])?>
     </div>
     <div class="one">
         <?= $form->field($model, 'encache')->checkbox([])?>

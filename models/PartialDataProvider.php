@@ -47,10 +47,6 @@ class PartialDataProvider extends BaseDataProvider{
 
         if (($pagination = $this->getPagination()) !== false) {
             $pagination->totalCount = $this->getTotalCount();
-
-            if ($pagination->getPageSize() > 0) {
-                $models = array_slice($models, $pagination->getOffset(), $pagination->getLimit());
-            }
         }
 
         return $models;
