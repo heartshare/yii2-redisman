@@ -29,8 +29,6 @@ foreach($info as $section=>$data){
 ?>
 
 <div class="ui blue segment">
-    <h1 class="ui header"> <?=$module->getCurrentName()?> </h1>
-
     <?php
 echo Accordion::widget([
         'styled' => true,

@@ -308,14 +308,14 @@ class RedismanModule extends Module
      */
     public function registerTranslations()
     {
-        \Yii::setAlias('@redisman_messages', __DIR__ . '/messages');
-        \Yii::$app->i18n->translations['insolita/modules/redisman/*'] = [
+        \Yii::setAlias('@redisman_messages', __DIR__ . '/messages/');
+        \Yii::$app->i18n->translations['insolita/redisman/*'] = [
             'class' => 'yii\i18n\PhpMessageSource',
-            'basePath' => '@redisman_messages',
+            'basePath' => \Yii::getAlias('@redisman_messages'),
             'sourceLanguage' => 'en',
             'fileMap' => [
-                'insolita/modules/redisman/redisman' => 'redisman.php',
-                'insolita/modules/redisman/app' => 'app.php',
+                'insolita/redisman/redisman' => 'redisman.php',
+                'insolita/redisman/app' => 'app.php',
             ],
         ];
     }
@@ -354,10 +354,10 @@ class RedismanModule extends Module
      *
      * @return string
      */
-    public static function t($category,$message, $params = [], $language = 'en')
+    public static function t($category,$message, $params = [], $language = null)
     {
         //return \Yii::t('redisman', $message, $params, $language);
-        return \Yii::t('insolita/modules/redisman/'.$category, $message, $params, $language);
+        return \Yii::t('insolita/redisman/'.$category, $message, $params, $language);
     }
 
 } 

@@ -35,10 +35,10 @@ $model->db = $module->getCurrentDb();
 
         <?= $form->field($model, 'db')->dropDownList($module->dbList(), ['id' => 'currentdb']) ?>
     </div><br/>
-<div class="one right aligned">
+<div class="one right ui aligned">
 <?= Elements::button(
-    '<i class="sign in icon"></i>' . \insolita\redisman\RedismanModule::t('redisman','Connect'),
-    ['class' => 'green icon circular tiny button right', 'type' => 'submit', 'tag' => 'button']
+    '<i class="plug icon"></i>' . \insolita\redisman\RedismanModule::t('redisman','Connect'),
+    ['class' => 'green circular right  aligned', 'type' => 'submit', 'tag' => 'button']
 ) ?>    </div>
 
 <?php ActiveForm::end(); ?>

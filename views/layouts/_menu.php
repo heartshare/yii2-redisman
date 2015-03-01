@@ -13,7 +13,7 @@ $dbselect = $module->dbList()
 
 <div class="ui vertical menu pointing fluid">
     <div class="header item">
-       <i class="icon configure"></i> <?= RedismanModule::t('redisman','Connection Settings') ?>
+       <i class="icon options"></i> <?= RedismanModule::t('redisman','Connection Settings') ?>
     </div>
     <div class="text item">
         <?= $this->render('_connectform') ?>

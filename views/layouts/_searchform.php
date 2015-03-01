@@ -43,6 +43,6 @@ $model->restoreFilter();
     </div><br/>
 <div class="one right aligned">
 <?= Elements::button(
-    '<i class="find icon"></i>' . Yii::t('app', 'Search'), ['class' => 'teal circular tiny right', 'type' => 'submit','tag'=>'button']
+    '<i class="find icon"></i>' . Yii::t('app', 'Search'), ['class' => 'teal circular right ui aligned', 'type' => 'submit','tag'=>'button']
 ) ?></div>
 <?php ActiveForm::end(); ?>

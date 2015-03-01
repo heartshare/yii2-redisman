@@ -24,8 +24,7 @@ class Alert extends Widget
     private $_icons;
     private $_titles;
 
-    /**@var boolean - Show close button for alert* */
-    public $closable = true;
+
     /**@var boolean - Encode flash messages?* */
     public $encode = true;
     /**@var boolean - Wrap message in <b> tag?* */
@@ -36,10 +35,10 @@ class Alert extends Widget
     public $warningIcon = '<i class="icon warning sign"></i>';
     public $infoIcon = '<i class="icon info sign"></i>';
 
-    public $successTitle = 'Успешно!';
-    public $errorTitle = 'Ошибка!';
-    public $warningTitle = 'Внимание!';
-    public $infoTitle = 'К сведению!';
+    public $successTitle = 'Success!';
+    public $errorTitle = 'Error!';
+    public $warningTitle = 'Warning!';
+    public $infoTitle = 'Attention!';
 
 
     public function init()
@@ -75,16 +74,14 @@ class Alert extends Widget
                 }
             }
 
-            Html::addCssClass($this->options, 'ui message');
+            Html::addCssClass($this->options, 'ui icon message '.$this->_classes[$fk]);
             $mess = !$this->encode ? $mess : Html::encode($mess);
             $msg .= Html::tag(
                 'div',
                 $this->_icons[$fk]
-                . (!$this->closable ? ''
-                    : '<i class="close icon"></i>')
                 . Html::tag(
                     'div',
-                    ($this->_titles[$fk] ? Html::tag('div', $this->_titles[$fk], ['class' => 'header']) : '') . ' '
+                    Html::tag('div', $this->_titles[$fk], ['class' => 'header']). ' '
                     . (!$this->bold ? $mess : Html::tag('b', $mess)), ['class' => 'content']
                 )
 

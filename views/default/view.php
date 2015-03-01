@@ -25,16 +25,16 @@ $items = [];
                     'key' => urlencode($key),
                     'db' => $db
                 ]
-            )), ['class'=>'item']);
+            ),['data-method'=>'post', 'data-confirm'=>RedismanModule::t('redisman','O`RLY? Current action move this key in other redis-base!')]), ['class'=>'item']);
 
     }
 }
 $items=Html::tag('div',implode('',$items),['class'=>'menu']);
 ?>
 
-<div class="ui blue segment">
-    <h1 class="ui header"> <?= $module->getCurrentName() ?>
-        <div class="sub header"><?= Html::encode($key) ?></div>
+<div class="ui blue pointed segment">
+    <h1 class="ui header">
+        <div class="sub header "><i class="icon privacy"></i><?= Html::encode($key) ?></div>
     </h1>
     <div class="ui two column grid">
         <div class="column">
@@ -49,7 +49,7 @@ $items=Html::tag('div',implode('',$items),['class'=>'menu']);
                             'refcount', 'idletime',
                             [
                                 'attribute' => 'db', 'format' => 'raw',
-                                'value' => Html::tag('div', Html::tag('div',' <i class="dropdown icon"></i>Move to'.$items, ['class' => 'ui simple dropdown item']),
+                                'value' => Html::tag('div', Html::tag('div',' <i class="dropdown icon"></i>'.RedismanModule::t('redisman','Move To').$items, ['class' => 'ui simple dropdown item']),
                                     ['class' => 'ui compact menu'])
                             ],
                             'encoding', ['attribute' => 'value']

@@ -4,7 +4,7 @@
             'topAttached' => true,
             'fluid' => true,
             'inverted' => true,
-            'options'=>['class'=>'centered'],
+            'options'=>['class'=>'centered '],
             'items' => [
                 [
                     'url' => ['/'],
