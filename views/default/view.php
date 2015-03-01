@@ -4,11 +4,11 @@ use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\widgets\DetailView;
 
 /**
- * @var \yii\web\View $this
+ * @var \yii\web\View                                    $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
- * @var string $key
- * @var \insolita\redisman\models\RedisItem $data
+ * @var \insolita\redisman\RedismanModule                $module
+ * @var string                                           $key
+ * @var \insolita\redisman\models\RedisItem              $data
  */
 $module = $this->context->module;
 $this->title = $module->getCurrentName();
@@ -83,19 +83,23 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
 
                 <div class="one">
                     <?php echo $form->field($data, 'value')->widget(
-                        \lav45\aceEditor\AceEditorWidget::className(),[
+                        \lav45\aceEditor\AceEditorWidget::className(), [
 
-                            'mode' => ($data->type==RedismanModule::REDIS_STRING)?'text':'json',
-                                'fontSize' => 14,
-                                'height' => 200,
+                            'mode' => ($data->type == RedismanModule::REDIS_STRING) ? 'text' : 'json',
+                            'fontSize' => 14,
+                            'height' => 200,
 
                         ]
                     ); ?>
                 </div>
                 <div class="one">
                     <?php echo $form->field($data, 'newttl')->textInput(['class' => 'small']); ?>  </div>
-                <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Save') ?>
-                </button>
+                <br/>
+
+                <div class="one">
+                    <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Save') ?>
+                    </button>
+                </div>
                 <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>
                 </p>
 
