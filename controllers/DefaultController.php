@@ -50,6 +50,10 @@ class DefaultController extends \yii\web\Controller
         return $this->render('index',['info'=>$info]);
     }
 
+    public function actionShow($pattern=null){
+
+    }
+
     public function actionCreate()
     {
 
@@ -64,6 +68,8 @@ class DefaultController extends \yii\web\Controller
     {
 
     }
+
+
 
     public function actionSwitch()
     {
