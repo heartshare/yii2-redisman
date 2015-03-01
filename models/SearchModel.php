@@ -103,6 +103,9 @@ class SearchModel extends Model
         }else{
             throw new NotFoundHttpException(RedismanModule::t('key not found'));
         }
+        if($type=='hash'){
+            $value=$this->arrayAssociative($value);
+        }
         return compact('value','type','size','ttl','refcount','idletype','encoding');
     }
     /**
@@ -254,6 +257,17 @@ class SearchModel extends Model
         \Yii::$app->session->set('RedisManager_searchModel', null);
     }
 
+    public function arrayAssociative($arr){
+        $newarr=[];
+        if(!empty($arr) && count($arr)%2==0){
+           $arr=array_chunk($arr,2);
+            foreach($arr as $pair){
+                $newarr[$pair[0]]=$pair[1];
+            }
+        }
+        unset($arr);
+        return $newarr;
+     }
     public function typeCondBuilder()
     {
         $typecond = "";
@@ -276,27 +290,29 @@ class SearchModel extends Model
     protected function infoScript($key){
         $script
             = <<<EOF
-local tp=redis.call("TYPE", $key)["ok"]
+local tp=redis.call("TYPE", "$key")["ok"]
+local size=9999
 if tp == "string" then
-    size=redis.call("STRLEN", $key)
+    size=redis.call("STRLEN", "$key")
 elseif tp == "hash" then
-    size=redis.call("HLEN", $key)
+    size=redis.call("HLEN", "$key")
 elseif tp == "list" then
-    size=redis.call("LLEN", $key)
+    size=redis.call("LLEN", "$key")
 elseif tp == "set" then
-    size=redis.call("SCARD", $key)
+    size=redis.call("SCARD", "$key")
 elseif tp == "zset" then
-    size=redis.call("ZCARD", $key)
+    size=redis.call("ZCARD", "$key")
 else
     size=9999
 end
-local info={tp, size, redis.call("TTL", $key),
-            redis.call("OBJECT REFCOUNT", $key),redis.call("OBJECT IDLETIME", $key),
-            redis.call("OBJECT ENCODING", $key),redis.call("TTL", $key)};
+local info={tp, size, redis.call("TTL", "$key"),
+            redis.call("OBJECT","REFCOUNT", "$key"),redis.call("OBJECT","IDLETIME", "$key"),
+            redis.call("OBJECT", "ENCODING", "$key"),redis.call("TTL", "$key")};
 return info;
 EOF;
         return $script;
     }
+
     protected function scriptBuilder($start, $end)
     {
         $typecond = $this->typeCondBuilder();

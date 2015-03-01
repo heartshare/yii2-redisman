@@ -62,16 +62,18 @@ class DefaultController extends \yii\web\Controller
         return $this->render('show',['model'=>$model,'dataProvider'=>$dataProvider]);
     }
 
-    public function actionCreate($key)
+    public function actionCreate($type)
     {
-        $key=urldecode($key);
-        return $this->render('create');
+         return $this->render('create');
 
     }
 
     public function actionUpdate($key)
     {
+        $model=new SearchModel();
         $key=urldecode($key);
+        $info=$model->find($key);
+         
         return $this->render('update');
 
     }

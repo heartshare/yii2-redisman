@@ -1,28 +1,30 @@
 <?php
-use \insolita\redisman\RedismanModule;
+use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\widgets\GridView;
-use Zelenin\yii\SemanticUI\modules\Dropdown;
-use \yii\helpers\Html;
+
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
  * @var \insolita\redisman\RedismanModule $module
- * @var array $info
+ * @var \yii\data\ArrayDataProvider $dataProvider
  */
 $module=$this->context->module;
 $this->title=$module->getCurrentName();
-$dblist=$module->dbList();
-
 ?>
 
 <div class="ui blue segment">
-    <h1 class="ui header"> <?=$module->getCurrentName()?> </h1>
+    <h1 class="ui header">
+        <?=$module->getCurrentName()?>
+
+    </h1>
 
     <?php
     echo GridView::widget([
             'dataProvider'=>$dataProvider,
             'columns'=>[
-                'key','type','size','ttl',
+                [ 'class'=>'\Zelenin\yii\SemanticUI\widgets\CheckboxColumn'],
+                'key'
+                ,'type','size','ttl',
                 [
                     'class'=>'\yii\grid\ActionColumn',
                     'template'=>'{view} {update} {delete}',
