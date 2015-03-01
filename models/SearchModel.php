@@ -95,6 +95,9 @@ class SearchModel extends Model
         . $this->module->getCurrentConn() . ":" . $this->module->getCurrentDb() . ':' . $this->module->greedySearch;
     }
 
+    /**
+     * @return RedisItem
+    **/
     public  function find($key){
         $conn=$this->module->getConnection();
         $value=$this->getKeyVal($key);
@@ -106,7 +109,7 @@ class SearchModel extends Model
         if($type=='hash'){
             $value=$this->arrayAssociative($value);
         }
-        return compact('value','type','size','ttl','refcount','idletype','encoding');
+        return \Yii::createObject(ArrayHelper::merge(['class'=>'insolita\redisman\RedisItem'],compact('value','type','size','ttl','refcount','idletype','encoding')));
     }
     /**
      * @param $key
