@@ -31,14 +31,27 @@ $this->title = $module->getCurrentName();
                     <?php echo $form->field($model, 'key')->textInput([]); ?>
                 </div>
                 <div class="one">
-                    <?php echo $form->field($model, 'value')->widget(
-                        \lav45\aceEditor\AceEditorWidget::className(),
-                        [
-                            'mode' => ($model->type == RedismanModule::REDIS_STRING) ? 'text' : 'json',
-                            'fontSize' => 14,
-                            'height' => 200,
-                        ]
-                    ); ?>
+                    <?php
+                    if($data->type==RedismanModule::REDIS_STRING){
+                        echo $form->field($model, 'value')->widget(
+                            \lav45\aceEditor\AceEditorWidget::className(), [
+
+                                'mode' => 'text',
+                                'fontSize' => 15,
+                                'height' => 200,
+
+                            ]
+                        );
+                    }else{
+                        echo $form->field($model, 'jsonvalue')->widget(
+                            \lav45\aceEditor\AceEditorWidget::className(), [
+                                'mode' => 'json',
+                                'fontSize' => 15,
+                                'height' => 200,
+                            ]
+                        );
+                    }
+                    ?>
                 </div>
                 <div class="one">
                     <?php echo $form->field($model, 'ttl')->textInput(['class' => 'small']); ?>

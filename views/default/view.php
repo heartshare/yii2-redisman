@@ -82,22 +82,34 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                     )?>
 
                 <div class="one">
-                    <?php echo $form->field($data, 'value')->widget(
-                        \lav45\aceEditor\AceEditorWidget::className(), [
+                    <?php
+                    if($data->type==RedismanModule::REDIS_STRING){
+                        echo $form->field($data, 'value')->widget(
+                            \lav45\aceEditor\AceEditorWidget::className(), [
 
-                            'mode' => ($data->type == RedismanModule::REDIS_STRING) ? 'text' : 'json',
-                            'fontSize' => 14,
-                            'height' => 200,
+                                'mode' => 'text',
+                                'fontSize' => 15,
+                                'height' => 200,
 
-                        ]
-                    ); ?>
+                            ]
+                        );
+                    }else{
+                        echo $form->field($data, 'jsonvalue')->widget(
+                            \lav45\aceEditor\AceEditorWidget::className(), [
+                                'mode' => 'json',
+                                'fontSize' => 15,
+                                'height' => 200,
+                            ]
+                        );
+                    }
+                     ?>
                 </div>
                 <div class="one">
                     <?php echo $form->field($data, 'newttl')->textInput(['class' => 'small']); ?>  </div>
                 <br/>
 
                 <div class="one">
-                    <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Save') ?>
+                    <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Replace') ?>
                     </button>
                 </div>
                 <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>

@@ -61,7 +61,7 @@ class SearchModel extends Model
     public function rules()
     {
         return [
-            [['type'], 'default', 'value' => ['string', 'set', 'hash', 'zset', 'list']],
+            [['type'], 'default', 'value' => array_keys(RedismanModule::$types)],
             [['pattern'], 'default', 'value' => '*:*'],
             [['perpage'], 'default', 'value' => 20],
             ['encache', 'default', 'value' => 0],

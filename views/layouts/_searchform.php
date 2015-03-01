@@ -27,11 +27,11 @@ $model->restoreFilter();
     <div class="one">
 
         <?= $form->field($model, 'type')->checkboxList([
-                'string'=>RedismanModule::t('redisman','string'),
-                'hash'=>RedismanModule::t('redisman','hash'),
-                'list'=>RedismanModule::t('redisman','list'),
-                'set'=>RedismanModule::t('redisman','set'),
-                'zset'=>RedismanModule::t('redisman','zset')
+                RedismanModule::REDIS_STRING=>RedismanModule::t('redisman','string'),
+                RedismanModule::REDIS_HASH>RedismanModule::t('redisman','hash'),
+                RedismanModule::REDIS_LIST=>RedismanModule::t('redisman','list'),
+                RedismanModule::REDIS_SET=>RedismanModule::t('redisman','set'),
+                RedismanModule::REDIS_ZSET>RedismanModule::t('redisman','zset')
 
             ])?>
     </div>

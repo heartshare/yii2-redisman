@@ -105,7 +105,6 @@ class RedismanModule extends Module
      */
     public static $types
         = array(
-            'none' => 'REDIS_UNDEFINED',
             'string' => 'REDIS_STRING',
             'set' => 'REDIS_SET',
             'list' => 'REDIS_LIST',

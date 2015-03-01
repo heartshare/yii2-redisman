@@ -57,9 +57,14 @@ class RedisItem extends Model
      */
     public $storage;
     /**
-     * @var string|array $value
+     * @var array|string $value
      */
-    public  $value;
+    public $value;
+
+    /**
+     * @var string $jsonvalue
+     */
+    public $jsonvalue;
     /**
      * @var integer $newttl
      */
@@ -90,8 +95,25 @@ class RedisItem extends Model
     public function rules()
     {
         return [
-            [['value'], 'itemValidator'],
-            [['ttl'], 'integer']
+            [['type'], 'in','range'=>array_keys(RedismanModule::$types)],
+            [['value'], 'string', 'when'=>function($model){return $model->type==RedismanModule::REDIS_STRING;}],
+            [['jsonvalue'], 'string'],
+            [['jsonvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=RedismanModule::REDIS_STRING;}],
+            [['ttl'], 'integer', 'min' => 1]
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     * @return array
+     */
+    public function scenarios()
+    {
+        return [
+            'default' => ['key', 'value','jsonvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
+            'update' => ['value','jsonvalue',  'newttl'],
+            'append' => ['value','jsonvalue'],
+            'create' => ['key', 'value','jsonvalue', 'newttl']
         ];
     }
 
@@ -105,14 +127,22 @@ class RedisItem extends Model
     {
         if ($this->type == RedismanModule::REDIS_STRING) {
             return true;
-        } elseif ($this->type == RedismanModule::REDIS_LIST) {
-            return true;
-        } elseif ($this->type == RedismanModule::REDIS_HASH) {
-            return true;
-        } elseif ($this->type == RedismanModule::REDIS_SET) {
-            return true;
-        } elseif ($this->type == RedismanModule::REDIS_ZSET) {
-            return true;
+        } else {
+            if(!@json_decode($this->$attribute)){
+                return $this->addError($this->$attribute,RedismanModule::t('redisman','Wrong Json format'));
+            }else{
+                $json
+                if ($this->type == RedismanModule::REDIS_LIST) {
+                    return true;
+                } elseif ($this->type == RedismanModule::REDIS_HASH) {
+                    return true;
+                } elseif ($this->type == RedismanModule::REDIS_SET) {
+                    return true;
+                } elseif ($this->type == RedismanModule::REDIS_ZSET) {
+                    return true;
+                }
+            }
+
         }
     }
 
@@ -124,6 +154,7 @@ class RedisItem extends Model
         return [
             'key' => RedismanModule::t('redisman', 'Key'),
             'value' => RedismanModule::t('redisman', 'Value'),
+            'jsonvalue' => RedismanModule::t('redisman', 'JSON Value'),
             'size' => RedismanModule::t('redisman', 'Key Length'),
             'ttl' => RedismanModule::t('redisman', 'Expire'),
             'type' => RedismanModule::t('redisman', 'Keys type'),
@@ -138,7 +169,9 @@ class RedisItem extends Model
 
     /**
      * Find key value and properties by key
+     *
      * @param string $key
+     *
      * @return RedisItem
      **/
     public function find($key)
@@ -156,10 +189,8 @@ class RedisItem extends Model
             || $type == RedismanModule::REDIS_SET
         ) {
             $value = $this->arrayAssociative($value);
-            $value = Json::encode($value);
-        } elseif ($type != RedismanModule::REDIS_STRING) {
-            $value = Json::encode($value);
         }
+        $jsonvalue = Json::encode($value);
         $this->setAttributes(
             ArrayHelper::merge(
                 [
@@ -167,7 +198,7 @@ class RedisItem extends Model
                     'db' => $this->module->getCurrentDb(),
                     'storage' => $this->module->getCurrentConn()
                 ],
-                compact('value', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
+                compact('value','jsonvalue', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
             ), false
         );
         return $this;
@@ -175,6 +206,7 @@ class RedisItem extends Model
 
     /**
      * Get any redis key function
+     *
      * @param string $key
      *
      * @return bool
@@ -201,6 +233,7 @@ class RedisItem extends Model
 
     /**
      * Add any redis key function
+     *
      * @param int    $type
      * @param string $key
      * @param (string|array) $value
@@ -234,6 +267,7 @@ class RedisItem extends Model
 
     /**
      * Converted redis-returned array into normal hash array
+     *
      * @param array $arr
      *
      * @return array
@@ -253,6 +287,7 @@ class RedisItem extends Model
 
     /**
      * Generate script for searching key information
+     *
      * @param string $key
      *
      * @return string
