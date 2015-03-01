@@ -92,7 +92,12 @@ $this->beginPage();
                     ]
                 )?>
 
-                <?= \insolita\redisman\widgets\Alert::widget([]) ?>
+                <?= \insolita\redisman\widgets\Alert::widget([
+                        'successTitle'=>RedismanModule::t('redisman','Success!'),
+                        'errorTitle'=>RedismanModule::t('redisman','Error!'),
+                        'warningTitle'=>RedismanModule::t('redisman','Warning!'),
+                        'infoTitle'=>RedismanModule::t('redisman','Attention!!'),
+                    ]) ?>
                 <?= $content ?>
             </div>
         </div>

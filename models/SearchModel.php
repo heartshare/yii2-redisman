@@ -17,15 +17,28 @@ use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
 /**
- * @property string  $pattern
- * @property array   $type
- * @property integer $perpage
- **/
+ * Class SearchModel
+ *
+ * @package insolita\redisman\models
+ */
+
 class SearchModel extends Model
 {
+    /**
+     * @var string $pattern - pattern for search
+     */
     public $pattern;
+    /**
+     * @var array $type - array of searched redis-types
+     */
     public $type;
+    /**
+     * @var integer $perpage
+     */
     public $perpage;
+    /**
+     * @var boolean $encache
+     */
     public $encache;
 
     /**
@@ -33,6 +46,9 @@ class SearchModel extends Model
      **/
     private $module;
 
+    /**
+     * @inherit
+     */
     public function init()
     {
         parent::init();
@@ -62,6 +78,12 @@ class SearchModel extends Model
         ];
     }
 
+    /**
+     * @param $attribute
+     * @param $params
+     *
+     * @return bool
+     */
     public function typeValidatior($attribute, $params)
     {
         if (!is_array($this->$attribute) or count($this->$attribute) > 5) {
@@ -80,6 +102,10 @@ class SearchModel extends Model
     }
 
 
+    /**
+     * @inherit
+     * @return array
+     */
     public function attributeLabels()
     {
         return [
@@ -90,15 +116,23 @@ class SearchModel extends Model
         ];
     }
 
-    public function getSearchId()
+    /**
+     * Generate search iedntification from params
+     * @return string
+     */
+    protected function getSearchId()
     {
         return $this->pattern . ':' . implode('', $this->type) . ":" . $this->perpage . ":"
         . $this->module->getCurrentConn() . ":" . $this->module->getCurrentDb() . ':' . $this->module->greedySearch;
     }
 
 
-
-
+    /**
+     * Search redis keys
+     * @param array $params
+     *
+     * @return PartialDataProvider|ArrayDataProvider
+     */
     public function search($params)
     {
         $page = ArrayHelper::getValue($params, 'page', 1);
@@ -165,6 +199,10 @@ class SearchModel extends Model
             );
     }
 
+    /**
+     * @method Save search filter
+     * @return bool
+     */
     public function storeFilter()
     {
         if ($this->validate()) {
@@ -175,6 +213,9 @@ class SearchModel extends Model
         }
     }
 
+    /**
+     *@method Restore search filter
+     */
     public function restoreFilter()
     {
         if ($data = \Yii::$app->session->get('RedisManager_searchModel', null)) {
@@ -185,13 +226,20 @@ class SearchModel extends Model
         }
     }
 
+    /**
+     *@method Flush search filter
+     */
     public static function resetFilter()
     {
         \Yii::$app->session->set('RedisManager_searchModel', null);
     }
 
 
-    public function typeCondBuilder()
+    /**
+     * @method build condition for lua script
+     * @return string
+     */
+    protected function typeCondBuilder()
     {
         $typecond = "";
         if (count($this->type) == 5) {
@@ -211,6 +259,13 @@ class SearchModel extends Model
     }
 
 
+    /**
+     * @method prepare lua search script
+     * @param int $start
+     * @param int $end
+     *
+     * @return string
+     */
     protected function scriptBuilder($start, $end)
     {
         $typecond = $this->typeCondBuilder();
@@ -297,6 +352,10 @@ EOF;
         return ($this->module->searchMethod == 'SCAN') ? $scriptScan : $scriptKeys;
     }
 
+    /**
+     * Prepare lua search script for greedy search type
+     * @return string
+     */
     protected function scriptBuilderGreedy()
     {
         $typecond = $this->typeCondBuilder();

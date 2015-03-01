@@ -11,33 +11,82 @@ namespace insolita\redisman\models;
 use insolita\redisman\RedismanModule;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 
+/**
+ * Class RedisItem
+ *
+ * @package insolita\redisman\models
+ */
 class RedisItem extends Model
 {
+    /**
+     * @var string $key
+     */
     public $key;
+    /**
+     * @var integer $size
+     */
     public $size;
+    /**
+     * @var integer $ttl
+     */
     public $ttl;
+    /**
+     * @var string $type
+     */
     public $type;
+    /**
+     * @var integer $refcount
+     */
     public $refcount;
+    /**
+     * @var integer $idletime
+     */
     public $idletime;
+    /**
+     * @var string $encoding
+     */
     public $encoding;
+    /**
+     * @var integer $db
+     */
     public $db;
+    /**
+     * @var string $storage
+     */
     public $storage;
-    public $value;
+    /**
+     * @var string|array $value
+     */
+    public  $value;
+    /**
+     * @var integer $newttl
+     */
     public $newttl;
 
+    /**
+     * @var array $changedFields
+     */
     private $changedFields = [];
     /**
      * @var \insolita\redisman\RedismanModule $module
      **/
     private $module;
 
+    /**
+     * @inheritdoc
+     */
     public function init()
     {
         parent::init();
         $this->module = \Yii::$app->getModule('redisman');
     }
 
+    /**
+     * @inheritdoc
+     * @return array
+     */
     public function rules()
     {
         return [
@@ -46,6 +95,12 @@ class RedisItem extends Model
         ];
     }
 
+    /**
+     * @param $attribute
+     * @param $params
+     *
+     * @return bool
+     */
     public function itemValidator($attribute, $params)
     {
         if ($this->type == RedismanModule::REDIS_STRING) {
@@ -61,24 +116,29 @@ class RedisItem extends Model
         }
     }
 
+    /**
+     * @return array
+     */
     public function attributeLabels()
     {
         return [
-            'key' => RedismanModule::t('redisman','Key'),
-            'value' => RedismanModule::t('redisman','Value'),
-            'size' => RedismanModule::t('redisman','Key Length'),
-            'ttl' => RedismanModule::t('redisman','Expire'),
-            'type' => RedismanModule::t('redisman','Keys type'),
-            'refcount' => RedismanModule::t('redisman','Refcount'),
-            'idletime' => RedismanModule::t('redisman','Idle time'),
-            'encoding' => RedismanModule::t('redisman','Encoding'),
-            'newttl' => RedismanModule::t('redisman','Set Expire'),
-            'db'=>RedismanModule::t('redisman','Current Db num'),
-            'storage'=>RedismanModule::t('redisman','Current Db storage'),
+            'key' => RedismanModule::t('redisman', 'Key'),
+            'value' => RedismanModule::t('redisman', 'Value'),
+            'size' => RedismanModule::t('redisman', 'Key Length'),
+            'ttl' => RedismanModule::t('redisman', 'Expire'),
+            'type' => RedismanModule::t('redisman', 'Keys type'),
+            'refcount' => RedismanModule::t('redisman', 'Refcount'),
+            'idletime' => RedismanModule::t('redisman', 'Idle time'),
+            'encoding' => RedismanModule::t('redisman', 'Encoding'),
+            'newttl' => RedismanModule::t('redisman', 'Set Expire'),
+            'db' => RedismanModule::t('redisman', 'Current Db num'),
+            'storage' => RedismanModule::t('redisman', 'Current Db storage'),
         ];
     }
 
     /**
+     * Find key value and properties by key
+     * @param string $key
      * @return RedisItem
      **/
     public function find($key)
@@ -90,7 +150,7 @@ class RedisItem extends Model
                 'EVAL', [$this->infoScript($key), 0]
             );
         } else {
-            throw new NotFoundHttpException(RedismanModule::t('redisman','key not found'));
+            throw new NotFoundHttpException(RedismanModule::t('redisman', 'key not found'));
         }
         if ($type == RedismanModule::REDIS_HASH || $type == RedismanModule::REDIS_ZSET
             || $type == RedismanModule::REDIS_SET
@@ -104,8 +164,8 @@ class RedisItem extends Model
             ArrayHelper::merge(
                 [
                     'class' => 'insolita\redisman\models\RedisItem',
-                    'db'=>$this->module->getCurrentDb(),
-                    'storage'=>$this->module->getCurrentConn()
+                    'db' => $this->module->getCurrentDb(),
+                    'storage' => $this->module->getCurrentConn()
                 ],
                 compact('value', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
             ), false
@@ -114,7 +174,8 @@ class RedisItem extends Model
     }
 
     /**
-     * @param $key
+     * Get any redis key function
+     * @param string $key
      *
      * @return bool
      */
@@ -139,9 +200,10 @@ class RedisItem extends Model
 
 
     /**
-     * @param int $type
+     * Add any redis key function
+     * @param int    $type
      * @param string $key
-     * @param (string|array)$value
+     * @param (string|array) $value
      *
      * @return boolean
      */
@@ -170,6 +232,12 @@ class RedisItem extends Model
 
     }
 
+    /**
+     * Converted redis-returned array into normal hash array
+     * @param array $arr
+     *
+     * @return array
+     */
     protected function arrayAssociative($arr)
     {
         $newarr = [];
@@ -183,6 +251,12 @@ class RedisItem extends Model
         return $newarr;
     }
 
+    /**
+     * Generate script for searching key information
+     * @param string $key
+     *
+     * @return string
+     */
     protected function infoScript($key)
     {
         $script

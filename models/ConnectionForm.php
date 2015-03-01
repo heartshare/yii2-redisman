@@ -12,50 +12,79 @@ namespace insolita\redisman\models;
 use insolita\redisman\RedismanModule;
 use yii\base\Model;
 
-class ConnectionForm extends Model{
+/**
+ * Class ConnectionForm
+ *
+ * @package insolita\redisman\models
+ */
+class ConnectionForm extends Model
+{
 
+    /**
+     * @var string $connection
+     */
     public $connection;
+    /**
+     * @var integer $db
+     */
     public $db;
 
     /**
-     *  @var \insolita\redisman\RedismanModule $module
-    **/
+     * @var \insolita\redisman\RedismanModule $module
+     **/
     private $module;
 
-    public function init(){
+    /**
+     * @inherit
+     */
+    public function init()
+    {
         parent::init();
-        $this->module=\Yii::$app->getModule('redisman');
+        $this->module = \Yii::$app->getModule('redisman');
     }
 
     /**
+     * @inherit
      * @return array the validation rules.
      */
     public function rules()
     {
         return [
             [['connection', 'db'], 'required'],
-            [['connection'], 'in','range'=>$this->module->connectionList()],
+            [['connection'], 'in', 'range' => $this->module->connectionList()],
             ['db', 'integer'],
             ['db', 'validateDb'],
         ];
     }
 
-    public function attributeLabels(){
+    /**
+     * @inherit
+     * @return array
+     */
+    public function attributeLabels()
+    {
         return [
-            'connection'=>RedismanModule::t('redisman','Connection'),
-            'db'=>RedismanModule::t('redisman','Database')
+            'connection' => RedismanModule::t('redisman', 'Connection'),
+            'db' => RedismanModule::t('redisman', 'Database')
         ];
     }
 
-    public function ValidateDb($attribute, $params){
-        if(!$this->hasErrors('connection')){
-            $totalDbCount=$this->module->totalDbCount();
-            if($this->$attribute >=$totalDbCount[$this->connection]){
-                $this->addError($attribute,'Wrong Db');
+    /**
+     * @param $attribute
+     * @param $params
+     *
+     * @return bool
+     */
+    public function validateDb($attribute, $params)
+    {
+        if (!$this->hasErrors('connection')) {
+            $totalDbCount = $this->module->totalDbCount();
+            if ($this->$attribute >= $totalDbCount[$this->connection]) {
+                $this->addError($attribute, RedismanModule::t('redisman','Database with current number not allowed for this connection'));
                 return false;
             }
             return true;
-        }else{
+        } else {
             return false;
         }
     }

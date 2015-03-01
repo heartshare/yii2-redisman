@@ -1,6 +1,5 @@
 <?php
 use insolita\redisman\RedismanModule;
-use trntv\aceeditor\AceEditor;
 use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\collections\Menu;
 use Zelenin\yii\SemanticUI\widgets\DetailView;
@@ -31,14 +30,14 @@ $this->title = $module->getCurrentName();
                    <?php echo $form->field($model, 'key')->textInput([]); ?>
                 </div>
                 <div class="one">
-                    <?php echo $form->field($model, 'value')->widget([
+                    <?php echo $form->field($model, 'value')->widget(
                             \lav45\aceEditor\AceEditorWidget::className(),
                             [
-                                'mode' => 'json',
+                                'mode' => ($model->type==RedismanModule::REDIS_STRING)?'text':'json',
                                 'fontSize' => 14,
                                 'height' => 200,
                             ]
-                        ]); ?>
+                        ); ?>
                 </div>
                 <div class="one">
                 <?php echo $form->field($model, 'ttl')->textInput(['class' => 'small']); ?>

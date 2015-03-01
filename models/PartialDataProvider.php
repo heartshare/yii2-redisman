@@ -53,6 +53,7 @@ class PartialDataProvider extends BaseDataProvider{
     }
 
     /**
+     * Remove model slicing
      * @inheritdoc
      */
     protected function prepareKeys($models)

@@ -83,12 +83,12 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
 
                 <div class="one">
                     <?php echo $form->field($data, 'value')->widget(
-                        [\lav45\aceEditor\AceEditorWidget::className(),
-                            [
-                                'mode' => 'json',
+                        \lav45\aceEditor\AceEditorWidget::className(),[
+
+                            'mode' => ($data->type==RedismanModule::REDIS_STRING)?'text':'json',
                                 'fontSize' => 14,
                                 'height' => 200,
-                            ]
+
                         ]
                     ); ?>
                 </div>
