@@ -54,6 +54,12 @@ class RedismanModule extends Module
     public $defRedis = null;
 
     /**
+     * @var int $queryCacheDuration - duration of search query cache (only if enable cache option in search interface)
+     **/
+
+    public $queryCacheDuration = 600;
+
+    /**
      * @var \yii\redis\Connection $_connect current redis connection
      **/
     private $_connect = null;

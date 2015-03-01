@@ -3,6 +3,7 @@ namespace insolita\redisman\controllers;
 
 
 use insolita\redisman\models\ConnectionForm;
+use insolita\redisman\models\SearchModel;
 use insolita\redisman\RedismanModule;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
@@ -39,6 +40,8 @@ class DefaultController extends \yii\web\Controller
                 'actions' => [
                     'switch' => ['post'],
                     'flushdb' => ['post'],
+                    'search' => ['post'],
+                    'dbload' => ['post'],
                 ],
             ]
         ];
@@ -51,22 +54,27 @@ class DefaultController extends \yii\web\Controller
     }
 
     public function actionShow($pattern=null){
-
+        $model=new SearchModel();
+        $model->restoreFilter();
+        $dataProvider=$model->search(\Yii::$app->request->getQueryParams());
+        return $this->render('show',['model'=>$model,'dataProvider'=>$dataProvider]);
     }
 
     public function actionCreate()
     {
+        return $this->render('create');
 
     }
 
     public function actionUpdate()
     {
+        return $this->render('update');
 
     }
 
     public function actionView()
     {
-
+          return $this->render('view');
     }
 
 
@@ -86,6 +94,17 @@ class DefaultController extends \yii\web\Controller
 
     }
 
+    public function actionSearch(){
+        $model=new SearchModel();
+        if($model->load(\Yii::$app->request->post()) && $model->storeFilter()){
+           \Yii::$app->session->setFlash('success',RedismanModule::t('Search query updated'), false);
+            return $this->redirect(['show']);
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model), false);
+            return $this->redirect(['index']);
+        }
+    }
+
     public function actionSavedb(){
         $this->_conn->bgsave();
         if(\Yii::$app->request->isAjax){
@@ -103,6 +122,20 @@ class DefaultController extends \yii\web\Controller
         }else{
             \Yii::$app->session->setFlash('success',RedismanModule::t('Clearind Database'));
             return $this->redirect(['index']);
+        }
+    }
+
+    public function actionDbload(){
+        $connect=\Yii::$app->request->post('connection');
+        $totalDb=$this->module->totalDbCount();
+        if(isset($totalDb[$connect])){
+            $dblist = '';
+            for ($i = 0; $i < $totalDb[$connect]; $i++) {
+                $dblist.=Html::tag('div','Db №' . $i,['data-value'=> $i,'class'=>'item']);
+            }
+             return $dblist;
+        }else{
+            return false;
         }
     }
 

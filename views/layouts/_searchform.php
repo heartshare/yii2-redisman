@@ -10,13 +10,14 @@ use \insolita\redisman\RedismanModule;
 $module=$this->context->module;
 
 $model=new \insolita\redisman\models\SearchModel();
+$model->restoreFilter();
 ?>
 <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
     [
         'id' => 'login-form', 'options' => ['class' => 'ui form attached fluid'],
         'enableClientValidation'=>true,
         'method'=>'post',
-        'action'=>\yii\helpers\Url::to(['/redisman/default/show'])
+        'action'=>\yii\helpers\Url::to(['/redisman/default/search'])
     ]
 ); ?>
 <?= $form->errorSummary($model) ?>
@@ -36,6 +37,9 @@ $model=new \insolita\redisman\models\SearchModel();
     </div>
     <div class="one">
         <?= $form->field($model, 'perpage')->dropDownList([15=>15,30=>30,50=>50,100=>100,200=>200,500=>500])?>
+    </div>
+    <div class="one">
+        <?= $form->field($model, 'encache')->checkbox([])?>
     </div>
 
 <?= Elements::button(
