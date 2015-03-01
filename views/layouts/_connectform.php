@@ -35,7 +35,7 @@ $model->db = $module->getCurrentDb();
 
         <?= $form->field($model, 'db')->dropDownList($module->dbList(), ['id' => 'currentdb']) ?>
     </div>
-<div class="one">
+<div class="one right">
 <?= Elements::button(
     '<i class="sign in icon"></i>' . \insolita\redisman\RedismanModule::t('Connect'),
     ['class' => 'green icon circular tiny button right', 'type' => 'submit', 'tag' => 'button']

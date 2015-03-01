@@ -41,7 +41,7 @@ $model->restoreFilter();
     <div class="one">
         <?= $form->field($model, 'encache')->checkbox([])?>
     </div>
-<div class="one">
+<div class="one right">
 <?= Elements::button(
     '<i class="find icon"></i>' . Yii::t('app', 'Search'), ['class' => 'teal circular tiny right', 'type' => 'submit','tag'=>'button']
 ) ?></div>

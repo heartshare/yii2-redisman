@@ -20,10 +20,10 @@ foreach($dblist as $db=>$dbalias){
         $items[]=[
             'label'=>$dbalias,
             'url'=>\yii\helpers\Url::to(['redisman/default/move',
-                    'key'=>urlencode($this->key),
-                    'db'=>$db]),
-            'options'=>['class'=>'item']
-        ],
+                    'key'=>urlencode($key),
+                    'db'=>$db],['options'=>['class'=>'item']]),
+
+        ];
     }
 }
 ?>
@@ -44,8 +44,8 @@ foreach($dblist as $db=>$dbalias){
                             'size','ttl',
                             'refcount','idletime',
                             'encoding',
-                            ['label'=>'database','format'=>'raw',
-                                'value'=>\Zelenin\yii\SemanticUI\modules\Dropdown::widget(['items'=>$items])
+                            ['label'=>'db','format'=>'raw',
+                                'value'=>\Zelenin\yii\SemanticUI\modules\Dropdown::widget(['items'=>$items,'model'=>$data, 'attribute'=>'db'])
                             ],
                             ['attribute'=>'value']]
                     ])?>
