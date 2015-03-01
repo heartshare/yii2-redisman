@@ -36,7 +36,7 @@ foreach($dblist as $db=>$dbalias){
         <div class="column">
             <div class="ui raised segment">
                 <a class="ui ribbon teal label"><?=$data->type?></a>
-                <span><?=RedismanModule::t('Key Information')?></span>
+                <span><?=RedismanModule::t('redisman','Key Information')?></span>
                 <?php echo DetailView::widget([
                         'options'=>['class'=>'ui definition collapsing table'],
                         'model'=>$data,
@@ -53,7 +53,7 @@ foreach($dblist as $db=>$dbalias){
         </div>
         <div class="column">
             <div class="ui segment">
-                <a class="ui right ribbon blue label"><?=RedismanModule::t('Value')?></a>
+                <a class="ui right ribbon blue label"><?=RedismanModule::t('redisman','Value')?></a>
                 <p>
                     <?php $form= \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin([
                         'action'=>['/redisman/default/update','key'=>urlencode($key)]

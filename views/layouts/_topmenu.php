@@ -8,16 +8,16 @@
             'items' => [
                 [
                     'url' => ['/'],
-                    'label' => \insolita\redisman\RedismanModule::t('Main')
+                    'label' => \insolita\redisman\RedismanModule::t('redisman','Main')
                 ],
                 [
                     'url' => ['/site/about'],
-                    'label' => \insolita\redisman\RedismanModule::t('About')
+                    'label' => \insolita\redisman\RedismanModule::t('redisman','About')
                 ],
                 [
                     'url' => ['/site/logout'],
                     'options'=>['data-method'=>'post'],
-                    'label' => \insolita\redisman\RedismanModule::t('Logout'),
+                    'label' => \insolita\redisman\RedismanModule::t('redisman','Logout'),
                     'visible'=>!Yii::$app->user->isGuest
                 ],
 

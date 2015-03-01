@@ -22,16 +22,16 @@ $model->restoreFilter();
 ); ?>
 <?= $form->errorSummary($model) ?>
     <div class="one">
-        <?= $form->field($model, 'pattern')->textInput()->hint(RedismanModule::t('support redis patterns (*,?,[var])'))?>
+        <?= $form->field($model, 'pattern')->textInput()->hint(RedismanModule::t('redisman','support redis patterns (*,?,[var])'))?>
     </div>
     <div class="one">
 
         <?= $form->field($model, 'type')->checkboxList([
-                'string'=>RedismanModule::t('string'),
-                'hash'=>RedismanModule::t('hash'),
-                'list'=>RedismanModule::t('list'),
-                'set'=>RedismanModule::t('set'),
-                'zset'=>RedismanModule::t('zset')
+                'string'=>RedismanModule::t('redisman','string'),
+                'hash'=>RedismanModule::t('redisman','hash'),
+                'list'=>RedismanModule::t('redisman','list'),
+                'set'=>RedismanModule::t('redisman','set'),
+                'zset'=>RedismanModule::t('redisman','zset')
 
             ])?>
     </div>
@@ -40,8 +40,8 @@ $model->restoreFilter();
     </div>
     <div class="one">
         <?= $form->field($model, 'encache')->checkbox([])?>
-    </div>
-<div class="one right">
+    </div><br/>
+<div class="one right aligned">
 <?= Elements::button(
     '<i class="find icon"></i>' . Yii::t('app', 'Search'), ['class' => 'teal circular tiny right', 'type' => 'submit','tag'=>'button']
 ) ?></div>

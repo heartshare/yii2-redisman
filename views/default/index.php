@@ -18,11 +18,11 @@ foreach($info as $section=>$data){
         if($key=='rdb_last_save_time'){
             $val=date('d.m.Y H:i:s',$val);
         }
-        $content.=Html::tag('tr', Html::tag('td', RedismanModule::t($key)). Html::tag('td', $val));
+        $content.=Html::tag('tr', Html::tag('td', RedismanModule::t('redisman',$key)). Html::tag('td', $val));
     }
 
     $infoformat[]=[
-        'title'=>RedismanModule::t($section),
+        'title'=>RedismanModule::t('redisman',$section),
         'content'=>Html::tag('table',$content,['class'=>"ui definition table"])
     ];
 }

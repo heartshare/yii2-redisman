@@ -40,7 +40,7 @@ $items=Html::tag('div',implode('',$items),['class'=>'menu']);
         <div class="column">
             <div class="ui raised segment">
                 <a class="ui ribbon teal label"><?= RedismanModule::keyTyper($data->type) ?></a>
-                <span><?= RedismanModule::t('Key Information') ?></span>
+                <span><?= RedismanModule::t('redisman','Key Information') ?></span>
                 <?php echo DetailView::widget(
                     [
                         'model' => $data,
@@ -60,7 +60,7 @@ $items=Html::tag('div',implode('',$items),['class'=>'menu']);
         </div>
         <div class="column">
             <div class="ui segment">
-                <a class="ui right ribbon blue label"><?= RedismanModule::t('Value') ?></a>
+                <a class="ui right ribbon blue label"><?= RedismanModule::t('redisman','Value') ?></a>
 
                 <p>
                     <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(

@@ -3,6 +3,7 @@ namespace insolita\redisman\controllers;
 
 
 use insolita\redisman\models\ConnectionForm;
+use insolita\redisman\models\RedisItem;
 use insolita\redisman\models\SearchModel;
 use insolita\redisman\RedismanModule;
 use yii\filters\VerbFilter;
@@ -70,17 +71,17 @@ class DefaultController extends \yii\web\Controller
 
     public function actionUpdate($key)
     {
-        $model=new SearchModel();
+        $model=new RedisItem();
         $key=urldecode($key);
         $info=$model->find($key);
-         
+
         return $this->render('update');
 
     }
 
     public function actionView($key)
     {
-          $model=new SearchModel();
+          $model=new RedisItem();
           $key=urldecode($key);
           $data=$model->find($key);
           return $this->render('view',compact('key','data'));
@@ -107,7 +108,7 @@ class DefaultController extends \yii\web\Controller
             \Yii::info(VarDumper::dumpAsString($model->getAttributes()));
             $this->module->setConnection($model->connection, $model->db);
             SearchModel::resetFilter();
-            \Yii::$app->session->setFlash('success', RedismanModule::t('Switched to').$this->module->getCurrentName(),false);
+            \Yii::$app->session->setFlash('success', RedismanModule::t('redisman','Switched to').$this->module->getCurrentName(),false);
         }else{
             \Yii::$app->session->setFlash('error', Html::errorSummary($model),false);
         }
@@ -119,7 +120,7 @@ class DefaultController extends \yii\web\Controller
     public function actionSearch(){
         $model=new SearchModel();
         if($model->load(\Yii::$app->request->post()) && $model->storeFilter()){
-           \Yii::$app->session->setFlash('success',RedismanModule::t('Search query updated'), false);
+           \Yii::$app->session->setFlash('success',RedismanModule::t('redisman','Search query updated'), false);
             return $this->redirect(['show']);
         }else{
             \Yii::$app->session->setFlash('error',Html::errorSummary($model), false);
@@ -132,7 +133,7 @@ class DefaultController extends \yii\web\Controller
         if(\Yii::$app->request->isAjax){
             echo 'ok';
         }else{
-            \Yii::$app->session->setFlash('success',RedismanModule::t('database saving run in background'));
+            \Yii::$app->session->setFlash('success',RedismanModule::t('redisman','database saving run in background'));
             return $this->redirect(['index']);
         }
     }
@@ -142,7 +143,7 @@ class DefaultController extends \yii\web\Controller
         if(\Yii::$app->request->isAjax){
             echo 'ok';
         }else{
-            \Yii::$app->session->setFlash('success',RedismanModule::t('Clearind Database'));
+            \Yii::$app->session->setFlash('success',RedismanModule::t('redisman','Clearind Database'));
             return $this->redirect(['index']);
         }
     }

@@ -124,12 +124,12 @@ class RedismanModule extends Module
 
         if (empty($this->connections)) {
             throw new InvalidConfigException(
-                self::t('Wrong module configuration! Please set array of available redis connections')
+                self::t('redisman','Wrong module configuration! Please set array of available redis connections')
             );
         }
 
         if (empty($this->defRedis) or !in_array($this->defRedis, $this->connectionList())) {
-            throw new InvalidConfigException(self::t('Wrong module configuration! Wrong configuration defRedis param'));
+            throw new InvalidConfigException(self::t('redisman','Wrong module configuration! Wrong configuration defRedis param'));
         }
         $this->restoreFromSession();
         $this->getConnection(false, $this->_dbCurrent);
@@ -223,7 +223,7 @@ class RedismanModule extends Module
     public function setConnection($name, $db = null)
     {
         if (!isset($this->connections[$name])) {
-            throw new ErrorException(self::t('Wrong redis connection name'));
+            throw new ErrorException(self::t('redisman','Wrong redis connection name'));
         } else {
             $this->_conCurrent = $name;
             $this->_connect = $this->getConnection(true, $db);
@@ -312,8 +312,10 @@ class RedismanModule extends Module
         \Yii::$app->i18n->translations['insolita/modules/redisman/*'] = [
             'class' => 'yii\i18n\PhpMessageSource',
             'basePath' => '@redisman_messages',
+            'sourceLanguage' => 'en',
             'fileMap' => [
-                'insolita/modules/redisman/redisman' => 'redisman.php'
+                'insolita/modules/redisman/redisman' => 'redisman.php',
+                'insolita/modules/redisman/app' => 'app.php',
             ],
         ];
     }
@@ -326,7 +328,7 @@ class RedismanModule extends Module
     public static function keyTyper($type)
     {
         if (isset(self::$types[$type])) {
-            return self::t(self::$types[$type]);
+            return self::t('redisman',self::$types[$type]);
         } else {
             return 'undefined';
         }
@@ -352,10 +354,10 @@ class RedismanModule extends Module
      *
      * @return string
      */
-    public static function t($message, $params = [], $language = null)
+    public static function t($category,$message, $params = [], $language = 'en')
     {
         //return \Yii::t('redisman', $message, $params, $language);
-        return \Yii::t('insolita/modules/redisman/redisman', $message, $params, $language);
+        return \Yii::t('insolita/modules/redisman/'.$category, $message, $params, $language);
     }
 
 } 

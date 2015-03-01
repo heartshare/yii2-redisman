@@ -65,13 +65,13 @@ class SearchModel extends Model
     public function typeValidatior($attribute, $params)
     {
         if (!is_array($this->$attribute) or count($this->$attribute) > 5) {
-            $this->addError($attribute, RedismanModule::t('Wrong  redis type - it must be array'));
+            $this->addError($attribute, RedismanModule::t('redisman','Wrong  redis type - it must be array'));
             return false;
         } else {
             $val_rt = ['string', 'set', 'hash', 'zset', 'list'];
             foreach ($this->$attribute as $t) {
                 if (!is_string($t) || !in_array($t, $val_rt)) {
-                    $this->addError($attribute, RedismanModule::t('Wrong redis type'));
+                    $this->addError($attribute, RedismanModule::t('redisman','Wrong redis type'));
                     return false;
                 }
             }
@@ -83,10 +83,10 @@ class SearchModel extends Model
     public function attributeLabels()
     {
         return [
-            'pattern' => RedismanModule::t('Search pattern'),
-            'type' => RedismanModule::t('Type'),
-            'perpage' => RedismanModule::t('Page Size'),
-            'encache' => RedismanModule::t('Enable query caching?'),
+            'pattern' => RedismanModule::t('redisman','Search pattern'),
+            'type' => RedismanModule::t('redisman','Type'),
+            'perpage' => RedismanModule::t('redisman','Page Size'),
+            'encache' => RedismanModule::t('redisman','Enable query caching?'),
         ];
     }
 

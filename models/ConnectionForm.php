@@ -42,8 +42,8 @@ class ConnectionForm extends Model{
 
     public function attributeLabels(){
         return [
-            'connection'=>RedismanModule::t('Connection'),
-            'db'=>RedismanModule::t('Database')
+            'connection'=>RedismanModule::t('redisman','Connection'),
+            'db'=>RedismanModule::t('redisman','Database')
         ];
     }
 

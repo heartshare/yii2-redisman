@@ -42,10 +42,10 @@ $this->beginPage();
                     [
                         'pointing'=>true,
                         'items' => [
-                            ['label' => RedismanModule::t('Info'), 'url' => ['/redisman/default/index']],
-                            ['label' => RedismanModule::t('List'), 'url' => ['/redisman/default/show']],
+                            ['label' => RedismanModule::t('redisman','Info'), 'url' => ['/redisman/default/index']],
+                            ['label' => RedismanModule::t('redisman','List'), 'url' => ['/redisman/default/show']],
                             [
-                                'label' => RedismanModule::t('Add'),
+                                'label' => RedismanModule::t('redisman','Add'),
                                 'items' => [
                                     ['label' => RedismanModule::keyTyper(RedismanModule::REDIS_STRING),
                                     'url' => ['/redisman/default/add', 'type'=>RedismanModule::REDIS_STRING]],
