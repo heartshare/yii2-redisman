@@ -13,6 +13,7 @@ use insolita\redisman\RedismanModule;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -106,10 +107,13 @@ class SearchModel extends Model
         }else{
             throw new NotFoundHttpException(RedismanModule::t('key not found'));
         }
-        if($type=='hash'){
+        if($type==RedismanModule::REDIS_HASH||$type==RedismanModule::REDIS_ZSET||$type==RedismanModule::REDIS_SET){
             $value=$this->arrayAssociative($value);
+            $value=Json::encode($value);
+        }elseif($type!=RedismanModule::REDIS_STRING){
+            $value=Json::encode($value);
         }
-        return \Yii::createObject(ArrayHelper::merge(['class'=>'insolita\redisman\RedisItem'],compact('value','type','size','ttl','refcount','idletype','encoding')));
+        return \Yii::createObject(ArrayHelper::merge(['class'=>'insolita\redisman\models\RedisItem'],compact('value','type','size','ttl','refcount','idletime','encoding')));
     }
     /**
      * @param $key

@@ -14,7 +14,18 @@ use insolita\redisman\RedismanModule;
 $module=$this->context->module;
 $this->title=$module->getCurrentName();
 $dblist=$module->dbList();
-
+$items=[];
+foreach($dblist as $db=>$dbalias){
+    if($db!=$module->getCurrentDb()){
+        $items[]=[
+            'label'=>$dbalias,
+            'url'=>\yii\helpers\Url::to(['redisman/default/move',
+                    'key'=>urlencode($this->key),
+                    'db'=>$db]),
+            'options'=>['class'=>'item']
+        ],
+    }
+}
 ?>
 
 <div class="ui blue segment">
@@ -24,14 +35,19 @@ $dblist=$module->dbList();
     <div class="ui two column grid">
         <div class="column">
             <div class="ui raised segment">
-                <a class="ui ribbon teal label"><?=RedismanModule::keyTyper($data->type)?></a>
+                <a class="ui ribbon teal label"><?=$data->type?></a>
                 <span><?=RedismanModule::t('Key Information')?></span>
                 <?php echo DetailView::widget([
+                        'options'=>['class'=>'ui definition collapsing table'],
                         'model'=>$data,
                         'attributes'=>[
                             'size','ttl',
                             'refcount','idletime',
-                            'encoding',['attribute'=>'value']]
+                            'encoding',
+                            ['label'=>'database','format'=>'raw',
+                                'value'=>\Zelenin\yii\SemanticUI\modules\Dropdown::widget(['items'=>$items])
+                            ],
+                            ['attribute'=>'value']]
                     ])?>
             </div>
         </div>

@@ -38,7 +38,7 @@ $model->db = $module->getCurrentDb();
 <div class="one">
 <?= Elements::button(
     '<i class="sign in icon"></i>' . \insolita\redisman\RedismanModule::t('Connect'),
-    ['class' => 'green icon circular tiny button right aligned', 'type' => 'submit', 'tag' => 'button']
+    ['class' => 'green icon circular tiny button right', 'type' => 'submit', 'tag' => 'button']
 ) ?>    </div>
 
 <?php ActiveForm::end(); ?>

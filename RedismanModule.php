@@ -321,14 +321,14 @@ class RedismanModule extends Module
     /**
      * @param int $type
      *
-     * @return bool
+     * @return string
      */
     public static function keyTyper($type)
     {
         if (isset(self::$types[$type])) {
             return self::t(self::$types[$type]);
         } else {
-            return false;
+            return 'undefined';
         }
     }
 
