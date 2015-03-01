@@ -15,7 +15,9 @@ class DefaultController extends \yii\web\Controller
      * @var \insolita\redisman\RedismanModule $module
      */
     public $module;
-
+    /**
+     * @var \yii\redis\Connection $_conn
+     */
     private $_conn=null;
 
     public function init(){
@@ -53,31 +55,48 @@ class DefaultController extends \yii\web\Controller
         return $this->render('index',['info'=>$info]);
     }
 
-    public function actionShow($pattern=null){
+    public function actionShow(){
         $model=new SearchModel();
         $model->restoreFilter();
         $dataProvider=$model->search(\Yii::$app->request->getQueryParams());
         return $this->render('show',['model'=>$model,'dataProvider'=>$dataProvider]);
     }
 
-    public function actionCreate()
+    public function actionCreate($key)
     {
+        $key=urldecode($key);
         return $this->render('create');
 
     }
 
-    public function actionUpdate()
+    public function actionUpdate($key)
     {
+        $key=urldecode($key);
         return $this->render('update');
 
     }
 
-    public function actionView()
+    public function actionView($key)
     {
-          return $this->render('view');
+          $model=new SearchModel();
+          $key=urldecode($key);
+          $data=$model->find($key);
+          return $this->render('view',compact('key','data'));
     }
 
+    public function actionMove($key, $db)
+    {
+        $key=urldecode($key);
+        if($db!==$this->module->getCurrentDb()){
+            $this->_conn->executeCommand('MOVE',[$key, (int) $db]);
+        }
 
+        return $this->redirect(['show']);
+    }
+
+    public function actionBulk(){
+        //@TODO:$this
+    }
 
     public function actionSwitch()
     {
@@ -107,7 +126,7 @@ class DefaultController extends \yii\web\Controller
     }
 
     public function actionSavedb(){
-        $this->_conn->bgsave();
+        $this->_conn->executeCommand('BGSAVE');
         if(\Yii::$app->request->isAjax){
             echo 'ok';
         }else{
@@ -117,7 +136,7 @@ class DefaultController extends \yii\web\Controller
     }
 
     public function actionFlushdb(){
-        $this->_conn->flushdb();
+        $this->_conn->executeCommand('FLUSHDB');
         if(\Yii::$app->request->isAjax){
             echo 'ok';
         }else{
@@ -138,6 +157,10 @@ class DefaultController extends \yii\web\Controller
         }else{
             return false;
         }
+    }
+
+    public function actionResetAppCache(){
+        //@TODO:$this
     }
 
 } 

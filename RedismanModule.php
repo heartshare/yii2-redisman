@@ -343,78 +343,7 @@ class RedismanModule extends Module
         return self::keyTyper($type);
     }
 
-    /**
-     * @param $key
-     *
-     * @return bool
-     */
-    public function getKeyVal($key)
-    {
-        $type = $this->_connect->type($key);
-        if ($type == self::REDIS_STRING) {
-            return $this->_connect->get($key);
-        } elseif ($type == self::REDIS_HASH) {
-            return $this->_connect->hgetall($key);
-        } elseif ($type == self::REDIS_ZSET) {
-            return $this->_connect->zrange($key, 0, -1,'withscores');
-        } elseif ($type == self::REDIS_SET) {
-            return $this->_connect->smembers($key);
-        } elseif ($type == self::REDIS_LIST) {
-            return $this->_connect->lrange($key, 0, -1);
-        } else {
-            return false;
-        }
-    }
 
-    /**
-     * @param int    $type
-     * @param string $key
-     * @param (string|array)$value
-     *
-     * @return boolean
-     */
-    public function addKey($type, $key, $value)
-    {
-        if ($type == self::REDIS_STRING) {
-            return $this->_connect->set($key, $value);
-        } elseif(is_array($value)) {
-            array_unshift($value, $key);
-            if ($type == self::REDIS_LIST) {
-                return $this->_connect->executeCommand('RPUSH', $value);
-            } elseif ($type == self::REDIS_SET) {
-                return $this->_connect->executeCommand('SADD', $value);
-            } elseif ($type == self::REDIS_ZSET) {
-                return $this->_connect->executeCommand('ZADD', $value);
-            } elseif ($type == self::REDIS_HASH) {
-                return $this->_connect->executeCommand('HMSET', $value);
-            } else {
-                return false;
-            }
-
-        } else {
-            return false;
-        }
-
-    }
-    /*public function keyDataProvider($group='*'){
-        if(($rediskeys=Yii::app()->cache->get('rediskeys_'.$group))==false){
-            $rediskeys=array();
-            $group=($group!='*')?$group.'*':'*';
-            $keys=$this->getAllKeys($group);
-            if(!empty($keys) && is_array($keys)){
-                natcasesort($keys);
-                foreach($keys as $key){
-                    $rediskeys[]=array('id'=>$key,'type'=>$this->getType($key),'ttl'=>$this->getTtl($key));
-                }
-            }
-            Yii::app()->cache->set('rediskeys',serialize($rediskeys),7200);
-        }else{
-            $rediskeys=unserialize($rediskeys);
-        }
-        $dp=new CArrayDataProvider($rediskeys,array('id'=>'id',
-                'pagination'=>array('pageSize'=>300)));
-        return $dp;
-    }*/
 
     /**
      * @param       $message

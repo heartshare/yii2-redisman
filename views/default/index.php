@@ -15,6 +15,9 @@ $infoformat=[];
 foreach($info as $section=>$data){
     $content='';
     foreach($data as $key=>$val){
+        if($key=='rdb_last_save_time'){
+            $val=date('d.m.Y H:i:s',$val);
+        }
         $content.=Html::tag('tr', Html::tag('td', RedismanModule::t($key)). Html::tag('td', $val));
     }
 
