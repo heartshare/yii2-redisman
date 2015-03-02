@@ -191,7 +191,7 @@ class RedisItem extends Model
             list($type, $size, $ttl, $refcount, $idletype, $encoding) = $conn->executeCommand(
                 'EVAL', [$this->infoScript($key), 0]
             );
-            if($type!==RedismanModule::REDIS_STRING && $size > 2000){
+            if($type!==RedismanModule::REDIS_STRING && $size > 5000){
                 //@TODO: big value
             }else{
                 $value = $this->getKeyVal($key, $type);
@@ -247,6 +247,10 @@ class RedisItem extends Model
         } else {
             return false;
         }
+    }
+
+    public function searchVals($params){
+        $data=$this->getKeyVal();
     }
 
 

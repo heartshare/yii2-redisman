@@ -122,7 +122,12 @@ class DefaultController extends \yii\web\Controller
         $model = new RedisItem();
         $key = urldecode($key);
         $data = $model->find($key);
-        return $this->render('view', compact('key', 'data'));
+        if($data->type==RedismanModule::REDIS_STRING){
+            $view='view';
+        }else{
+            $view='view_list';
+        }
+        return $this->render($view, compact('key', 'data'));
     }
 
     /**
