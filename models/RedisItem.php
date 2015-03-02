@@ -12,6 +12,7 @@ use insolita\redisman\RedismanModule;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
+use yii\web\NotFoundHttpException;
 
 /**
  * Class RedisItem
@@ -62,9 +63,9 @@ class RedisItem extends Model
     public $value;
 
     /**
-     * @var string $jsonvalue
+     * @var string $formatvalue
      */
-    public $jsonvalue;
+    public $formatvalue;
     /**
      * @var integer $newttl
      */
@@ -97,8 +98,8 @@ class RedisItem extends Model
         return [
             [['type'], 'in','range'=>array_keys(RedismanModule::$types)],
             [['value'], 'string', 'when'=>function($model){return $model->type==RedismanModule::REDIS_STRING;}],
-            [['jsonvalue'], 'string'],
-            [['jsonvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=RedismanModule::REDIS_STRING;}],
+            [['formatvalue'], 'string'],
+            [['formatvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=RedismanModule::REDIS_STRING;}],
             [['ttl'], 'integer', 'min' => 1]
         ];
     }
@@ -110,10 +111,10 @@ class RedisItem extends Model
     public function scenarios()
     {
         return [
-            'default' => ['key', 'value','jsonvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
-            'update' => ['value','jsonvalue',  'newttl'],
-            'append' => ['value','jsonvalue'],
-            'create' => ['key', 'value','jsonvalue', 'newttl']
+            'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
+            'update' => ['value','formatvalue',  'newttl'],
+            'append' => ['value','formatvalue'],
+            'create' => ['key', 'value','formatvalue', 'newttl']
         ];
     }
 
@@ -125,25 +126,29 @@ class RedisItem extends Model
      */
     public function itemValidator($attribute, $params)
     {
-        if ($this->type == RedismanModule::REDIS_STRING) {
-            return true;
-        } else {
-            if(!@json_decode($this->$attribute)){
-                return $this->addError($this->$attribute,RedismanModule::t('redisman','Wrong Json format'));
-            }else{
-                $json
+ 
+                $val=Json::decode($this->attribute);
+                $json=$this->$attribute;
+                $parsejson=mb_substr($json,1,mb_strlen($json)-1);
+                /**
+                 * формат список с заданным разделителем
+                **/
+                /**
+                 * "val1","val2","val3".... REDIS_LIST|REDIS_SET
+                 * "field1","val1","field2","val2"....REDIS_HASH  % 2
+                 * 1,'test1val', 2,'iufri', 5, 'ifurirf'  REDIS_ZSET % 2 - первый в паре - integer
+                */
+
+
                 if ($this->type == RedismanModule::REDIS_LIST) {
-                    return true;
+
                 } elseif ($this->type == RedismanModule::REDIS_HASH) {
                     return true;
                 } elseif ($this->type == RedismanModule::REDIS_SET) {
                     return true;
                 } elseif ($this->type == RedismanModule::REDIS_ZSET) {
                     return true;
-                }
-            }
-
-        }
+                } 
     }
 
     /**
@@ -154,7 +159,7 @@ class RedisItem extends Model
         return [
             'key' => RedismanModule::t('redisman', 'Key'),
             'value' => RedismanModule::t('redisman', 'Value'),
-            'jsonvalue' => RedismanModule::t('redisman', 'JSON Value'),
+            'formatvalue' => RedismanModule::t('redisman', 'JSON Value'),
             'size' => RedismanModule::t('redisman', 'Key Length'),
             'ttl' => RedismanModule::t('redisman', 'Expire'),
             'type' => RedismanModule::t('redisman', 'Keys type'),
@@ -171,37 +176,49 @@ class RedisItem extends Model
      * Find key value and properties by key
      *
      * @param string $key
-     *
      * @return RedisItem
+     * @throws \yii\web\NotFoundHttpException'
      **/
     public function find($key)
     {
         $conn = $this->module->getConnection();
-        $value = $this->getKeyVal($key);
-        if ($value) {
+        $info = $conn->executeCommand(
+            'EVAL', [$this->infoScript($key), 0]
+        );
+        if(!$info){
+            throw new NotFoundHttpException(RedismanModule::t('redisman', 'key not found'));
+        }else{
             list($type, $size, $ttl, $refcount, $idletype, $encoding) = $conn->executeCommand(
                 'EVAL', [$this->infoScript($key), 0]
             );
-        } else {
-            throw new NotFoundHttpException(RedismanModule::t('redisman', 'key not found'));
+            if($type!==RedismanModule::REDIS_STRING && $size > 2000){
+                //@TODO: big value
+            }else{
+                $value = $this->getKeyVal($key, $type);
+                if ($type == RedismanModule::REDIS_HASH || $type == RedismanModule::REDIS_ZSET) {
+                    $value = $this->arrayAssociative($value);
+                    $formatvalue = Json::encode($value);
+                }else{
+                    $formatvalue = implode(',',$value);
+                }
+
+            }
+            $this->setAttributes(
+                ArrayHelper::merge(
+                    [
+                        'class' => 'insolita\redisman\models\RedisItem',
+                        'key'=>$key,
+                        'db' => $this->module->getCurrentDb(),
+                        'storage' => $this->module->getCurrentConn()
+                    ],
+                    compact('value','formatvalue', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
+                ), false
+            );
+            return $this;
+
         }
-        if ($type == RedismanModule::REDIS_HASH || $type == RedismanModule::REDIS_ZSET
-            || $type == RedismanModule::REDIS_SET
-        ) {
-            $value = $this->arrayAssociative($value);
-        }
-        $jsonvalue = Json::encode($value);
-        $this->setAttributes(
-            ArrayHelper::merge(
-                [
-                    'class' => 'insolita\redisman\models\RedisItem',
-                    'db' => $this->module->getCurrentDb(),
-                    'storage' => $this->module->getCurrentConn()
-                ],
-                compact('value','jsonvalue', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
-            ), false
-        );
-        return $this;
+
+
     }
 
     /**
@@ -211,10 +228,12 @@ class RedisItem extends Model
      *
      * @return bool
      */
-    public function getKeyVal($key)
+    public function getKeyVal($key, $type=null)
     {
         $conn = $this->module->getConnection();
-        $type = $conn->type($key);
+        if(!$type){
+            $type = $conn->type($key);
+        }
         if ($type == RedismanModule::REDIS_STRING) {
             return $conn->get($key);
         } elseif ($type == RedismanModule::REDIS_HASH) {
@@ -296,6 +315,10 @@ class RedisItem extends Model
     {
         $script
             = <<<EOF
+local iskey = redis.call("EXISTS", "$key");
+if iskey=="0" then
+return 0
+end
 local tp=redis.call("TYPE", "$key")["ok"]
 local size=9999
 if tp == "string" then

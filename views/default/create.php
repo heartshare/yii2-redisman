@@ -43,7 +43,7 @@ $this->title = $module->getCurrentName();
                             ]
                         );
                     }else{
-                        echo $form->field($model, 'jsonvalue')->widget(
+                        echo $form->field($model, 'formatvalue')->widget(
                             \lav45\aceEditor\AceEditorWidget::className(), [
                                 'mode' => 'json',
                                 'fontSize' => 15,

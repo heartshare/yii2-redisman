@@ -94,9 +94,9 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                             ]
                         );
                     }else{
-                        echo $form->field($data, 'jsonvalue')->widget(
+                        echo $form->field($data, 'formatvalue')->widget(
                             \lav45\aceEditor\AceEditorWidget::className(), [
-                                'mode' => 'json',
+                                'mode' => 'text',
                                 'fontSize' => 15,
                                 'height' => 200,
                             ]
