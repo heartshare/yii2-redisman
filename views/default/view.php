@@ -94,7 +94,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                             'action' => ['/redisman/default/update']
                         ]
                     )?>
-                    <input type="hidden" name="RedisItem[key]" value="'.$key.'">
+                    <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
                 <div class="one">
                     <?php
                         echo $form->field($data, 'formatvalue')->widget(
@@ -121,7 +121,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                                     'action' => ['/redisman/default/update']
                                 ]
                             )?>
-                            <input type="hidden" name="RedisItem[key]" value="'.$key.'">
+                            <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
                         <div class="one">
                             <?php
                             echo $form->field($data, 'appendvalue')->widget(

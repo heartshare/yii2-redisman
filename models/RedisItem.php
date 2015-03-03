@@ -271,33 +271,15 @@ class RedisItem extends Model
         }
 
         switch($type){
-        case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('RPUSH', $value);
-        case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HMSET', $value);
-        case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SADD', $value);
-        case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZADD', $value);
+        case RedismanModule::REDIS_STRING: return $this->module->executeCommand('GET', [$key]);
+        case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('LRANGE', [$key, 0, -1]);
+        case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HGETALL', [$key]);
+        case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SMEMBERS', [$key]);
+        case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZRANGE', [$key, 0, -1, 'WITHSCORES']);
         default:return false;
         }
 
-
-        if ($type == RedismanModule::REDIS_STRING) {
-            return $conn->get($key);
-        } elseif ($type == RedismanModule::REDIS_HASH) {
-            return $conn->hgetall($key);
-        } elseif ($type == RedismanModule::REDIS_ZSET) {
-            return $conn->zrange($key, 0, -1, 'withscores');
-        } elseif ($type == RedismanModule::REDIS_SET) {
-            return $conn->smembers($key);
-        } elseif ($type == RedismanModule::REDIS_LIST) {
-            return $conn->lrange($key, 0, -1);
-        } else {
-            return false;
-        }
     }
-
-    public function searchVals($params){
-        $data=$this->getKeyVal();
-    }
-
 
     /**
      * Add any redis key function
