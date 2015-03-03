@@ -280,6 +280,14 @@ class RedismanModule extends Module
         return $infoex;
     }
 
+    public function dbSave(){
+        $this->_connect->executeCommand('BGSAVE');
+    }
+
+    public function dbFlush(){
+        $this->_connect->executeCommand('FLUSHDB');
+    }
+
     /**
      * @return array
      * @throws InvalidConfigException

@@ -236,7 +236,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionSavedb()
     {
-        $this->_conn->executeCommand('BGSAVE');
+        $this->module->dbSave();
         if (\Yii::$app->request->isAjax) {
             echo 'ok';
         } else {
@@ -252,7 +252,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionFlushdb()
     {
-        $this->_conn->executeCommand('FLUSHDB');
+         $this->module->dbFlush();
         if (\Yii::$app->request->isAjax) {
             echo 'ok';
         } else {
