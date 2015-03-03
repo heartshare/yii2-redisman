@@ -4,7 +4,7 @@ namespace insolita\redisman\controllers;
 
 use insolita\redisman\models\ConnectionForm;
 use insolita\redisman\models\RedisItem;
-use insolita\redisman\models\SearchModel;
+use insolita\redisman\models\RedisModel;
 use insolita\redisman\RedismanModule;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
@@ -78,7 +78,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionShow()
     {
-        $model = new SearchModel();
+        $model = new RedisModel();
         $model->restoreFilter();
         $dataProvider = $model->search(\Yii::$app->request->getQueryParams());
         return $this->render('show', ['model' => $model, 'dataProvider' => $dataProvider]);
@@ -99,7 +99,7 @@ class DefaultController extends \yii\web\Controller
      * @param $key
      *
      * @return string
-     * @throws \insolita\redisman\models\NotFoundHttpException
+     * @throws \yii\web\NotFoundHttpException
      */
     public function actionUpdate($key)
     {
@@ -115,7 +115,7 @@ class DefaultController extends \yii\web\Controller
      * @param $key
      *
      * @return string
-     * @throws \insolita\redisman\models\NotFoundHttpException
+     * @throws \yii\web\NotFoundHttpException
      */
     public function actionView($key)
     {
@@ -123,9 +123,9 @@ class DefaultController extends \yii\web\Controller
         $key = urldecode($key);
         $data = $model->find($key);
         if($data->type==RedismanModule::REDIS_STRING){
-            $view='view';
+            $view='view_string';
         }else{
-            $view='view_list';
+            $view='view';
         }
         return $this->render($view, compact('key', 'data'));
     }
@@ -144,6 +144,22 @@ class DefaultController extends \yii\web\Controller
     }
 
     /**
+     * @return \yii\web\Response
+     */
+    public function actionPersist()
+    {
+        $model=new RedisItem();
+        $model->scenario='persist';
+        if($model->validate()){
+            $model->persist();
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
+        }
+
+        return $this->redirect(Url::to(['/redisman/default/view', 'key'=>urlencode($model->key)]));
+    }
+
+    /**
      * @param $key
      * @param $db
      *
@@ -152,20 +168,23 @@ class DefaultController extends \yii\web\Controller
     public function actionMove($key, $db)
     {
         $key = urldecode($key);
-        if ($db !== $this->module->getCurrentDb()) {
-            $this->_conn->executeCommand('MOVE', [$key, (int)$db]);
+        $model=new RedisItem();
+        $model->scenario='move';
+        $model->setAttributes($key,$db);
+        if($model->validate()){
+            $model->move();
             \Yii::$app->session->setFlash(
                 'success', RedismanModule::t(
                     'redisman', 'Key moved from Db№ {from} to {to}',
-                    ['from' => $this->module->getCurrentDb(), 'to' => (int)$db]
+                    ['from' => $this->module->getCurrentDb(), 'to' => $model->db]
                 )
             );
-        } else {
-            \Yii::$app->session->setFlash('error', RedismanModule::t('redisman', 'Bad idea - try move in itself'));
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
         }
-
         return $this->redirect(['show']);
-    }
+
+     }
 
     /**
      *
@@ -185,7 +204,7 @@ class DefaultController extends \yii\web\Controller
         if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             \Yii::info(VarDumper::dumpAsString($model->getAttributes()));
             $this->module->setConnection($model->connection, $model->db);
-            SearchModel::resetFilter();
+            RedisModel::resetFilter();
             \Yii::$app->session->setFlash(
                 'success', RedismanModule::t('redisman', 'Switched to') . $this->module->getCurrentName()
             );
@@ -202,7 +221,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionSearch()
     {
-        $model = new SearchModel();
+        $model = new RedisModel();
         if ($model->load(\Yii::$app->request->post()) && $model->storeFilter()) {
             \Yii::$app->session->setFlash('success', RedismanModule::t('redisman', 'Search query updated!'));
             return $this->redirect(['show']);

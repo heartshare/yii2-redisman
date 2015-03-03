@@ -17,12 +17,12 @@ use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
 /**
- * Class SearchModel
+ * Class RedisModel
  *
  * @package insolita\redisman\models
  */
 
-class SearchModel extends Model
+class RedisModel extends Model
 {
     /**
      * @var string $pattern - pattern for search
@@ -200,7 +200,7 @@ class SearchModel extends Model
     }
 
     /**
-     * @method Save search filter
+     *  Save search filter
      * @return bool
      */
     public function storeFilter()
@@ -214,7 +214,7 @@ class SearchModel extends Model
     }
 
     /**
-     *@method Restore search filter
+     * Restore search filter
      */
     public function restoreFilter()
     {
@@ -227,7 +227,7 @@ class SearchModel extends Model
     }
 
     /**
-     *@method Flush search filter
+     * Flush search filter
      */
     public static function resetFilter()
     {
@@ -236,7 +236,7 @@ class SearchModel extends Model
 
 
     /**
-     * @method build condition for lua script
+     *  build condition for lua script
      * @return string
      */
     protected function typeCondBuilder()
@@ -260,7 +260,7 @@ class SearchModel extends Model
 
 
     /**
-     * @method prepare lua search script
+     *  prepare lua search script
      * @param int $start
      * @param int $end
      *

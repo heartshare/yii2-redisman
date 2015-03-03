@@ -66,15 +66,19 @@ class RedisItem extends Model
      * @var string $formatvalue
      */
     public $formatvalue;
-    /**
-     * @var integer $newttl
-     */
-    public $newttl;
 
     /**
-     * @var array $changedFields
+     * @var string $appendvalue
      */
-    private $changedFields = [];
+    public $appendvalue;
+    /**
+     * @var int $appendpos
+     */
+    public $appendpos;
+    /**
+     * @var array $oldAttributes
+     */
+    private $oldAttributes= [];
     /**
      * @var \insolita\redisman\RedismanModule $module
      **/
@@ -96,11 +100,14 @@ class RedisItem extends Model
     public function rules()
     {
         return [
+            ['key','string'],
+            ['db','integer','min'=>0],
+            ['db','dbValidator','on'=>'move'],
             [['type'], 'in','range'=>array_keys(RedismanModule::$types)],
             [['value'], 'string', 'when'=>function($model){return $model->type==RedismanModule::REDIS_STRING;}],
             [['formatvalue'], 'string'],
             [['formatvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=RedismanModule::REDIS_STRING;}],
-            [['ttl'], 'integer', 'min' => 1]
+            [['ttl'], 'integer', 'min' => -1]
         ];
     }
 
@@ -112,12 +119,24 @@ class RedisItem extends Model
     {
         return [
             'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
-            'update' => ['value','formatvalue',  'newttl'],
+            'update' => ['value','formatvalue',  'ttl'],
             'append' => ['value','formatvalue'],
-            'create' => ['key', 'value','formatvalue', 'newttl']
+            'persist' => ['ttl'],
+            'move' => ['db'],
+            'create' => ['key', 'value','formatvalue', 'ttl']
         ];
     }
 
+    public function dbValidator($attribute, $params){
+          if($this->$attribute==$this->oldAttributes[$attribute]){
+              $this->addError($attribute,RedismanModule::t('redisman', 'Bad idea - try move in itself'));
+              return false;
+          }elseif(!is_array($this->$attribute, $this->module->dbList())){
+              $this->addError($attribute,RedismanModule::t('redisman', 'Try to move in unavailable db'));
+              return false;
+          }
+         return true;
+    }
     /**
      * @param $attribute
      * @param $params
@@ -159,7 +178,8 @@ class RedisItem extends Model
         return [
             'key' => RedismanModule::t('redisman', 'Key'),
             'value' => RedismanModule::t('redisman', 'Value'),
-            'formatvalue' => RedismanModule::t('redisman', 'JSON Value'),
+            'formatvalue' => RedismanModule::t('redisman', 'Value'),
+            'appendvalue' => RedismanModule::t('redisman', 'Append Value'),
             'size' => RedismanModule::t('redisman', 'Key Length'),
             'ttl' => RedismanModule::t('redisman', 'Expire'),
             'type' => RedismanModule::t('redisman', 'Keys type'),
@@ -191,17 +211,29 @@ class RedisItem extends Model
             list($type, $size, $ttl, $refcount, $idletype, $encoding) = $conn->executeCommand(
                 'EVAL', [$this->infoScript($key), 0]
             );
-            if($type!==RedismanModule::REDIS_STRING && $size > 5000){
-                //@TODO: big value
-            }else{
+            switch($type){
+            case RedismanModule::REDIS_STRING:
                 $value = $this->getKeyVal($key, $type);
-                if ($type == RedismanModule::REDIS_HASH || $type == RedismanModule::REDIS_ZSET) {
+                $formatvalue = $value;
+                break;
+            case RedismanModule::REDIS_HASH:
+            case RedismanModule::REDIS_ZSET:
+                if($size<5000){
+                    $value = $this->getKeyVal($key, $type);
                     $value = $this->arrayAssociative($value);
                     $formatvalue = Json::encode($value);
                 }else{
-                    $formatvalue = implode(',',$value);
+                    //@TODO: big value
                 }
-
+                break;
+            case RedismanModule::REDIS_LIST:
+            case RedismanModule::REDIS_SET:
+                if($size<5000){
+                    $value = $this->getKeyVal($key, $type);
+                    $formatvalue = implode("\r\n",$value);
+                }else{
+                    //@TODO: big value
+                }
             }
             $this->setAttributes(
                 ArrayHelper::merge(
@@ -214,11 +246,15 @@ class RedisItem extends Model
                     compact('value','formatvalue', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
                 ), false
             );
+            $this->afterFind();
             return $this;
 
         }
 
+    }
 
+    public function afterFind(){
+        $this->oldAttributes=$this->getAttributes();
     }
 
     /**
@@ -286,6 +322,20 @@ class RedisItem extends Model
             return false;
         }
 
+    }
+
+    public function persist(){
+        $conn = $this->module->getConnection();
+       if($this->ttl==-1){
+           $conn->executeCommand('PERSIST', [$this->key]);
+       }else{
+          $conn->executeCommand('EXPIRE', [$this->key, $this->ttl]);
+       }
+    }
+
+    public function move(){
+        $conn = $this->module->getConnection();
+        $conn->executeCommand('MOVE', [$this->key, $this->db]);
     }
 
     /**

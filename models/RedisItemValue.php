@@ -12,7 +12,7 @@ namespace insolita\redisman\models;
 use insolita\redisman\RedismanModule;
 use yii\base\Model;
 
-class RedisItemSearch extends Model{
+class RedisItemValue extends Model{
     public $parent_key;
     public $parent_type;
 

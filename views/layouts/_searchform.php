@@ -9,7 +9,7 @@ use \insolita\redisman\RedismanModule;
  */
 $module=$this->context->module;
 
-$model=new \insolita\redisman\models\SearchModel();
+$model=new \insolita\redisman\models\RedisModel();
 $model->restoreFilter();
 ?>
 <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
@@ -28,10 +28,10 @@ $model->restoreFilter();
 
         <?= $form->field($model, 'type')->checkboxList([
                 RedismanModule::REDIS_STRING=>RedismanModule::t('redisman','string'),
-                RedismanModule::REDIS_HASH>RedismanModule::t('redisman','hash'),
+                RedismanModule::REDIS_HASH=>RedismanModule::t('redisman','hash'),
                 RedismanModule::REDIS_LIST=>RedismanModule::t('redisman','list'),
                 RedismanModule::REDIS_SET=>RedismanModule::t('redisman','set'),
-                RedismanModule::REDIS_ZSET>RedismanModule::t('redisman','zset')
+                RedismanModule::REDIS_ZSET=>RedismanModule::t('redisman','zset')
 
             ])?>
     </div>
