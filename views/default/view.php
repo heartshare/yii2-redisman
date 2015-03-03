@@ -124,7 +124,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                             <input type="hidden" name="RedisItem[key]" value="'.$key.'">
                         <div class="one">
                             <?php
-                            echo $form->field($data, 'formatvalue')->widget(
+                            echo $form->field($data, 'appendvalue')->widget(
                                 \lav45\aceEditor\AceEditorWidget::className(), [
                                     'mode' => 'text',
                                     'fontSize' => 15,

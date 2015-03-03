@@ -13,8 +13,6 @@ use insolita\redisman\RedismanModule;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
-use yii\web\NotFoundHttpException;
 
 /**
  * Class RedisModel
@@ -143,10 +141,9 @@ class RedisModel extends Model
             $data = \Yii::$app->cache->get($this->getSearchId() . ':' . $page, null);
         }
         if (!$data) {
-            $conn = $this->module->getConnection();
             $queryScript = (!$this->module->greedySearch) ? $this->scriptBuilder($start, $end)
                 : $this->scriptBuilderGreedy();
-            $data = $conn->executeCommand('EVAL', [$queryScript, 0]);
+            $data = $this->module->executeCommand('EVAL', [$queryScript, 0]);
 
         }
         if (!empty($data)) {

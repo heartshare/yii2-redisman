@@ -251,21 +251,13 @@ class RedismanModule extends Module
         \Yii::$app->session->set('RedisManager_pattern', $pattern);
     }
 
-    /**
-     * @return mixed
-     */
-    public function searchKeys()
-    {
-        $keys = $this->_rconn->keys($this->_pattern);
-        return $keys;
-    }
 
     /**
      * @return array - formatted info about redis connection
      **/
     public function dbInfo()
     {
-        $info = $this->_connect->info('all');
+        $info = $this->_connect->executeCommand('INFO', ['all']);
         $info = explode("\r\n", $info);
         $infoex = [];
         $section = 'Undefined';
@@ -280,12 +272,19 @@ class RedismanModule extends Module
         return $infoex;
     }
 
+    public function type($key){
+        return $this->_connect->executeCommand('TYPE', [$key]);
+    }
     public function dbSave(){
         $this->_connect->executeCommand('BGSAVE');
     }
 
     public function dbFlush(){
         $this->_connect->executeCommand('FLUSHDB');
+    }
+
+    public function executeCommand($command, $params=[]){
+        return $this->_connect->executeCommand($command, $params);
     }
 
     /**
@@ -342,14 +341,14 @@ class RedismanModule extends Module
     }
 
     /**
+     *
      * @param $key
      *
      * @return bool
      */
-    public function getKeyType($key)
+    public function i18nType($key)
     {
-        $type = $this->_connect->type($key);
-        return self::keyTyper($type);
+        return self::keyTyper($this->type($key));
     }
 
 

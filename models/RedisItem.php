@@ -266,10 +266,19 @@ class RedisItem extends Model
      */
     public function getKeyVal($key, $type=null)
     {
-        $conn = $this->module->getConnection();
         if(!$type){
-            $type = $conn->type($key);
+            $type = $this->module->executeCommand('TYPE', [$key]);
         }
+
+        switch($type){
+        case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('RPUSH', $value);
+        case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HMSET', $value);
+        case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SADD', $value);
+        case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZADD', $value);
+        default:return false;
+        }
+
+
         if ($type == RedismanModule::REDIS_STRING) {
             return $conn->get($key);
         } elseif ($type == RedismanModule::REDIS_HASH) {
@@ -301,21 +310,16 @@ class RedisItem extends Model
      */
     public function addKey($type, $key, $value)
     {
-        $conn = $this->module->getConnection();
         if ($type == RedismanModule::REDIS_STRING) {
-            return $conn->set($key, $value);
+            return $this->module->executeCommand('SET',[$key, $value]);
         } elseif (is_array($value)) {
             array_unshift($value, $key);
-            if ($type == RedismanModule::REDIS_LIST) {
-                return $conn->executeCommand('RPUSH', $value);
-            } elseif ($type == RedismanModule::REDIS_SET) {
-                return $conn->executeCommand('SADD', $value);
-            } elseif ($type == RedismanModule::REDIS_ZSET) {
-                return $conn->executeCommand('ZADD', $value);
-            } elseif ($type == RedismanModule::REDIS_HASH) {
-                return $conn->executeCommand('HMSET', $value);
-            } else {
-                return false;
+            switch($type){
+            case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('RPUSH', $value);
+            case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HMSET', $value);
+            case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SADD', $value);
+            case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZADD', $value);
+            default:return false;
             }
 
         } else {
@@ -325,17 +329,15 @@ class RedisItem extends Model
     }
 
     public function persist(){
-        $conn = $this->module->getConnection();
        if($this->ttl==-1){
-           $conn->executeCommand('PERSIST', [$this->key]);
+           $this->module->executeCommand('PERSIST', [$this->key]);
        }else{
-          $conn->executeCommand('EXPIRE', [$this->key, $this->ttl]);
+           $this->module->executeCommand('EXPIRE', [$this->key, $this->ttl]);
        }
     }
 
     public function move(){
-        $conn = $this->module->getConnection();
-        $conn->executeCommand('MOVE', [$this->key, $this->db]);
+        $this->module->executeCommand('MOVE', [$this->key, $this->db]);
     }
 
     /**
