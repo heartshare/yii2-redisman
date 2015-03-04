@@ -9,7 +9,7 @@
 namespace insolita\redisman\models;
 
 
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\base\Model;
 
 class RedisItemValue extends Model{
@@ -28,8 +28,8 @@ class RedisItemValue extends Model{
 
     public function attributeLabels(){
         return [
-            'field_key'=>RedismanModule::t('redisman','Field key'),
-            'field_value'=>RedismanModule::t('redisman','Field value'),
+            'field_key'=>Redisman::t('redisman','Field key'),
+            'field_value'=>Redisman::t('redisman','Field value'),
         ];
     }
 

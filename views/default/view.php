@@ -1,13 +1,13 @@
 <?php
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\widgets\DetailView;
  /**
  * @var \yii\web\View                                    $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule                $module
+ * @var \insolita\redisman\Redisman                $module
  * @var string                                           $key
- * @var \insolita\redisman\models\RedisItem              $data
+ * @var \insolita\redisman\models\RedisItem              $model
  */
  $module = $this->context->module;
 $this->title = $module->getCurrentName();
@@ -25,7 +25,7 @@ foreach ($dblist as $db => $dbalias) {
                         'db' => $db
                     ]
                 ), [
-                    'data-method' => 'post', 'data-confirm' => RedismanModule::t(
+                    'data-method' => 'post', 'data-confirm' => Redisman::t(
                         'redisman', 'O`RLY? Current action move this key in other redis-base!'
                     )
                 ]
@@ -44,19 +44,19 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
     <div class="ui two column grid">
         <div class="column">
             <div class="ui raised segment">
-                <a class="ui ribbon teal label"><?= RedismanModule::keyTyper($data->type) ?></a>
-                <span><?= RedismanModule::t('redisman', 'Key Information') ?></span>
+                <a class="ui ribbon teal label"><?= Redisman::keyTyper($model->type) ?></a>
+                <span><?= Redisman::t('redisman', 'Key Information') ?></span>
                 <?php echo DetailView::widget(
                     [
-                        'model' => $data,
+                        'model' => $model,
                         'attributes' => [
                             'size',
                             [
                                 'attribute' =>'ttl','format'=>'raw',
-                                'value'=>$data->ttl.
+                                'value'=>$model->ttl.
                                     '<br/><form action="'.\yii\helpers\Url::to(['/redisman/default/persist']).'" method="post">
                                     <div class="ui action mini input">
-  <input placeholder="'.RedismanModule::t('redisman','Set TTl (-1 for persist)').'" type="text" name="RedisItem[ttl]">
+  <input placeholder="'.Redisman::t('redisman','Set TTl (-1 for persist)').'" type="text" name="RedisItem[ttl]">
   <input type="hidden" name="RedisItem[key]" value="'.$key.'">
   <button class="ui blue icon button">
     <i class="save icon"></i>
@@ -68,7 +68,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                                 'value' => Html::tag(
                                     'div', Html::tag(
                                         'div',
-                                        ' <i class="dropdown icon"></i>' . RedismanModule::t('redisman', 'Move To')
+                                        ' <i class="dropdown icon"></i>' . Redisman::t('redisman', 'Move To')
                                         . $items, ['class' => 'ui simple dropdown item']
                                     ),
                                     ['class' => 'ui compact menu']
@@ -82,10 +82,10 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
         </div>
         <div class="column">
             <div class="ui segment">
-                <a class="ui right ribbon blue label"><?= RedismanModule::t('redisman', 'Value') ?></a>
+                <a class="ui right ribbon blue label"><?= Redisman::t('redisman', 'Value') ?></a>
                 <div class="ui top attached tabular menu">
-                    <div class="active item" data-tab="tabedit"><?=RedismanModule::t('redisman','Edit')?></div>
-                    <div class="item" data-tab="tabappend"><?=RedismanModule::t('redisman','Append')?></div>
+                    <div class="active item" data-tab="tabedit"><?=Redisman::t('redisman','Edit')?></div>
+                    <div class="item" data-tab="tabappend"><?=Redisman::t('redisman','Append')?></div>
                 </div>
                 <div class="ui bottom attached active tab segment"  data-tab="tabedit">
                 <p>
@@ -97,7 +97,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                     <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
                 <div class="one">
                     <?php
-                        echo $form->field($data, 'formatvalue')->widget(
+                        echo $form->field($model, 'formatvalue')->widget(
                             \lav45\aceEditor\AceEditorWidget::className(), [
                                 'mode' => 'text',
                                 'fontSize' => 15,
@@ -124,7 +124,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                             <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
                         <div class="one">
                             <?php
-                            echo $form->field($data, 'appendvalue')->widget(
+                            echo $form->field($model, 'appendvalue')->widget(
                                 \lav45\aceEditor\AceEditorWidget::className(), [
                                     'mode' => 'text',
                                     'fontSize' => 15,

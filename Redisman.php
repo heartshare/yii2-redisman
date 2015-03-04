@@ -14,11 +14,11 @@ use yii\base\InvalidConfigException;
 use yii\base\Module;
 
 /**
- * Class RedismanModule
+ * Class Redisman
  *
  * @package insolita\redisman
  */
-class RedismanModule extends Module
+class Redisman extends Module
 {
 
     const REDIS_STRING = 'string';

@@ -1,11 +1,11 @@
 <?php
 use Zelenin\yii\SemanticUI\widgets\ActiveForm;
 use Zelenin\yii\SemanticUI\Elements;
-use \insolita\redisman\RedismanModule;
+use \insolita\redisman\Redisman;
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
+ * @var \insolita\redisman\Redisman $module
  */
 $module=$this->context->module;
 
@@ -22,16 +22,16 @@ $model->restoreFilter();
 ); ?>
 <?= $form->errorSummary($model) ?>
     <div class="one">
-        <?= $form->field($model, 'pattern')->textInput()->hint(RedismanModule::t('redisman','support redis patterns (*,?,[var])'))?>
+        <?= $form->field($model, 'pattern')->textInput()->hint(Redisman::t('redisman','support redis patterns (*,?,[var])'))?>
     </div>
     <div class="one">
 
         <?= $form->field($model, 'type')->checkboxList([
-                RedismanModule::REDIS_STRING=>RedismanModule::t('redisman','string'),
-                RedismanModule::REDIS_HASH=>RedismanModule::t('redisman','hash'),
-                RedismanModule::REDIS_LIST=>RedismanModule::t('redisman','list'),
-                RedismanModule::REDIS_SET=>RedismanModule::t('redisman','set'),
-                RedismanModule::REDIS_ZSET=>RedismanModule::t('redisman','zset')
+                Redisman::REDIS_STRING=>Redisman::t('redisman','string'),
+                Redisman::REDIS_HASH=>Redisman::t('redisman','hash'),
+                Redisman::REDIS_LIST=>Redisman::t('redisman','list'),
+                Redisman::REDIS_SET=>Redisman::t('redisman','set'),
+                Redisman::REDIS_ZSET=>Redisman::t('redisman','zset')
 
             ])?>
     </div>

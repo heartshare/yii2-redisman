@@ -9,7 +9,7 @@
 namespace insolita\redisman\models;
 
 
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
@@ -40,7 +40,7 @@ class RedisModel extends Model
     public $encache;
 
     /**
-     * @var \insolita\redisman\RedismanModule $module
+     * @var \insolita\redisman\Redisman $module
      **/
     private $module;
 
@@ -59,7 +59,7 @@ class RedisModel extends Model
     public function rules()
     {
         return [
-            [['type'], 'default', 'value' => array_keys(RedismanModule::$types)],
+            [['type'], 'default', 'value' => array_keys(Redisman::$types)],
             [['pattern'], 'default', 'value' => '*:*'],
             [['perpage'], 'default', 'value' => 20],
             ['encache', 'default', 'value' => 0],
@@ -85,13 +85,13 @@ class RedisModel extends Model
     public function typeValidatior($attribute, $params)
     {
         if (!is_array($this->$attribute) or count($this->$attribute) > 5) {
-            $this->addError($attribute, RedismanModule::t('redisman','Wrong  redis type - it must be array'));
+            $this->addError($attribute, Redisman::t('redisman','Wrong  redis type - it must be array'));
             return false;
         } else {
             $val_rt = ['string', 'set', 'hash', 'zset', 'list'];
             foreach ($this->$attribute as $t) {
                 if (!is_string($t) || !in_array($t, $val_rt)) {
-                    $this->addError($attribute, RedismanModule::t('redisman','Wrong redis type'));
+                    $this->addError($attribute, Redisman::t('redisman','Wrong redis type'));
                     return false;
                 }
             }
@@ -107,10 +107,10 @@ class RedisModel extends Model
     public function attributeLabels()
     {
         return [
-            'pattern' => RedismanModule::t('redisman','Search pattern'),
-            'type' => RedismanModule::t('redisman','Type'),
-            'perpage' => RedismanModule::t('redisman','Page Size'),
-            'encache' => RedismanModule::t('redisman','Enable query caching?'),
+            'pattern' => Redisman::t('redisman','Search pattern'),
+            'type' => Redisman::t('redisman','Type'),
+            'perpage' => Redisman::t('redisman','Page Size'),
+            'encache' => Redisman::t('redisman','Enable query caching?'),
         ];
     }
 

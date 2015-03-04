@@ -3,11 +3,11 @@ use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\widgets\DetailView;
 use trntv\aceeditor\AceEditor;
 use Zelenin\yii\SemanticUI\Elements;
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
+ * @var \insolita\redisman\Redisman $module
  * @var string $key
  * @var \insolita\redisman\models\RedisItem $data
  */
@@ -36,7 +36,7 @@ foreach($dblist as $db=>$dbalias){
         <div class="column">
             <div class="ui raised segment">
                 <a class="ui ribbon teal label"><?=$data->type?></a>
-                <span><?=RedismanModule::t('redisman','Key Information')?></span>
+                <span><?=Redisman::t('redisman','Key Information')?></span>
                 <?php echo DetailView::widget([
                         'options'=>['class'=>'ui definition collapsing table'],
                         'model'=>$data,
@@ -53,7 +53,7 @@ foreach($dblist as $db=>$dbalias){
         </div>
         <div class="column">
             <div class="ui segment">
-                <a class="ui right ribbon blue label"><?=RedismanModule::t('redisman','Value')?></a>
+                <a class="ui right ribbon blue label"><?=Redisman::t('redisman','Value')?></a>
                 <p>
                     <?php $form= \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin([
                         'action'=>['/redisman/default/update','key'=>urlencode($key)]

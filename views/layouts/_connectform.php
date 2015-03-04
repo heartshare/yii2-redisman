@@ -5,7 +5,7 @@ use Zelenin\yii\SemanticUI\widgets\ActiveForm;
 /**
  * @var \yii\web\View                                    $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule                $module
+ * @var \insolita\redisman\Redisman                $module
  */
 $module = $this->context->module;
 
@@ -37,7 +37,7 @@ $model->db = $module->getCurrentDb();
     </div><br/>
 <div class="one right ui aligned">
 <?= Elements::button(
-    '<i class="plug icon"></i>' . \insolita\redisman\RedismanModule::t('redisman','Connect'),
+    '<i class="plug icon"></i>' . \insolita\redisman\Redisman::t('redisman','Connect'),
     ['class' => 'green circular right  aligned', 'type' => 'submit', 'tag' => 'button']
 ) ?>    </div>
 

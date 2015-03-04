@@ -1,10 +1,10 @@
 <?php
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
+ * @var \insolita\redisman\Redisman $module
  * @var \insolita\redisman\models\RedisItem $model
  */
 $module = $this->context->module;
@@ -13,15 +13,15 @@ $this->title = $module->getCurrentName();
 
 <div class="ui green pointed segment">
     <h1 class="ui header">
-        <div class="sub header "><i class="icon plus circle"></i><?= RedismanModule::t(
+        <div class="sub header "><i class="icon plus circle"></i><?= Redisman::t(
                 'redisman', 'Add key - {0}', $model->type
             ) ?></div>
     </h1>
     <div class="ui two column grid">
         <div class="column">
             <div class="ui raised segment">
-                <a class="ui ribbon teal label"><?= RedismanModule::t('redisman', 'Fill form') ?></a>
-                <span><?= RedismanModule::t('redisman', 'Fields with * required') ?></span>
+                <a class="ui ribbon teal label"><?= Redisman::t('redisman', 'Fill form') ?></a>
+                <span><?= Redisman::t('redisman', 'Fields with * required') ?></span>
                 <?php $form = new \Zelenin\yii\SemanticUI\widgets\ActiveForm(
                     [
                         'action' => ['/redisman/module/create']
@@ -32,7 +32,7 @@ $this->title = $module->getCurrentName();
                 </div>
                 <div class="one">
                     <?php
-                    if($data->type==RedismanModule::REDIS_STRING){
+                    if($data->type==Redisman::REDIS_STRING){
                         echo $form->field($model, 'value')->widget(
                             \lav45\aceEditor\AceEditorWidget::className(), [
 
@@ -67,7 +67,7 @@ $this->title = $module->getCurrentName();
         </div>
         <div class="column">
             <div class="ui segment">
-                <a class="ui right ribbon blue label"><?= RedismanModule::t('redisman', 'Operations log') ?></a>
+                <a class="ui right ribbon blue label"><?= Redisman::t('redisman', 'Operations log') ?></a>
 
                 <p>
 

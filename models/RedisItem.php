@@ -8,7 +8,7 @@
 
 namespace insolita\redisman\models;
 
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
@@ -79,19 +79,7 @@ class RedisItem extends Model
      * @var array $oldAttributes
      */
     private $oldAttributes= [];
-    /**
-     * @var \insolita\redisman\RedismanModule $module
-     **/
-    private $module;
 
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        parent::init();
-        $this->module = \Yii::$app->getModule('redisman');
-    }
 
     /**
      * @inheritdoc
@@ -101,12 +89,13 @@ class RedisItem extends Model
     {
         return [
             ['key','string'],
+            ['key','keyExists'],
             ['db','integer','min'=>0],
             ['db','dbValidator','on'=>'move'],
-            [['type'], 'in','range'=>array_keys(RedismanModule::$types)],
-            [['value'], 'string', 'when'=>function($model){return $model->type==RedismanModule::REDIS_STRING;}],
+            [['type'], 'in','range'=>array_keys(Redisman::$types)],
+            [['value'], 'string', 'when'=>function($model){return $model->type==Redisman::REDIS_STRING;}],
             [['formatvalue'], 'string'],
-            [['formatvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=RedismanModule::REDIS_STRING;}],
+            [['formatvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=Redisman::REDIS_STRING;}],
             [['ttl'], 'integer', 'min' => -1]
         ];
     }
@@ -119,20 +108,29 @@ class RedisItem extends Model
     {
         return [
             'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
-            'update' => ['value','formatvalue',  'ttl'],
-            'append' => ['value','formatvalue'],
-            'persist' => ['ttl'],
-            'move' => ['db'],
+            'update' => ['key','value','formatvalue',  'ttl'],
+            'append' => ['key','value','formatvalue'],
+            'persist' => ['key','ttl'],
+            'move' => ['key','db'],
+             'delete'=>['key'],
             'create' => ['key', 'value','formatvalue', 'ttl']
         ];
     }
 
+    public function keyExists($attribute,$params){
+        if(!$check=Redisman::getInstance()->executeCommand('EXISTS',[$this->$attribute])){
+            $this->addError($attribute,Redisman::t('redisman', 'Key not found'));
+            return false;
+        }
+        return true;
+    }
+
     public function dbValidator($attribute, $params){
           if($this->$attribute==$this->oldAttributes[$attribute]){
-              $this->addError($attribute,RedismanModule::t('redisman', 'Bad idea - try move in itself'));
+              $this->addError($attribute,Redisman::t('redisman', 'Bad idea - try move in itself'));
               return false;
-          }elseif(!is_array($this->$attribute, $this->module->dbList())){
-              $this->addError($attribute,RedismanModule::t('redisman', 'Try to move in unavailable db'));
+          }elseif(!is_array($this->$attribute, Redisman::getInstance()->dbList())){
+              $this->addError($attribute,Redisman::t('redisman', 'Try to move in unavailable db'));
               return false;
           }
          return true;
@@ -159,13 +157,13 @@ class RedisItem extends Model
                 */
 
 
-                if ($this->type == RedismanModule::REDIS_LIST) {
+                if ($this->type == Redisman::REDIS_LIST) {
 
-                } elseif ($this->type == RedismanModule::REDIS_HASH) {
+                } elseif ($this->type == Redisman::REDIS_HASH) {
                     return true;
-                } elseif ($this->type == RedismanModule::REDIS_SET) {
+                } elseif ($this->type == Redisman::REDIS_SET) {
                     return true;
-                } elseif ($this->type == RedismanModule::REDIS_ZSET) {
+                } elseif ($this->type == Redisman::REDIS_ZSET) {
                     return true;
                 } 
     }
@@ -176,109 +174,98 @@ class RedisItem extends Model
     public function attributeLabels()
     {
         return [
-            'key' => RedismanModule::t('redisman', 'Key'),
-            'value' => RedismanModule::t('redisman', 'Value'),
-            'formatvalue' => RedismanModule::t('redisman', 'Value'),
-            'appendvalue' => RedismanModule::t('redisman', 'Append Value'),
-            'size' => RedismanModule::t('redisman', 'Key Length'),
-            'ttl' => RedismanModule::t('redisman', 'Expire'),
-            'type' => RedismanModule::t('redisman', 'Keys type'),
-            'refcount' => RedismanModule::t('redisman', 'Refcount'),
-            'idletime' => RedismanModule::t('redisman', 'Idle time'),
-            'encoding' => RedismanModule::t('redisman', 'Encoding'),
-            'newttl' => RedismanModule::t('redisman', 'Set Expire'),
-            'db' => RedismanModule::t('redisman', 'Current Db num'),
-            'storage' => RedismanModule::t('redisman', 'Current Db storage'),
+            'key' => Redisman::t('redisman', 'Key'),
+            'value' => Redisman::t('redisman', 'Value'),
+            'formatvalue' => Redisman::t('redisman', 'Value'),
+            'appendvalue' => Redisman::t('redisman', 'Append Value'),
+            'size' => Redisman::t('redisman', 'Key Length'),
+            'ttl' => Redisman::t('redisman', 'Expire'),
+            'type' => Redisman::t('redisman', 'Keys type'),
+            'refcount' => Redisman::t('redisman', 'Refcount'),
+            'idletime' => Redisman::t('redisman', 'Idle time'),
+            'encoding' => Redisman::t('redisman', 'Encoding'),
+            'newttl' => Redisman::t('redisman', 'Set Expire'),
+            'db' => Redisman::t('redisman', 'Current Db num'),
+            'storage' => Redisman::t('redisman', 'Current Db storage'),
         ];
     }
 
-    /**
-     * Find key value and properties by key
-     *
-     * @param string $key
-     * @return RedisItem
-     * @throws \yii\web\NotFoundHttpException'
-     **/
-    public function find($key)
-    {
-        $conn = $this->module->getConnection();
-        $info = $conn->executeCommand(
-            'EVAL', [$this->infoScript($key), 0]
+    public function findInfo(){
+        $info = Redisman::getInstance()->executeCommand(
+            'EVAL', [$this->infoScript($this->key), 0]
         );
         if(!$info){
-            throw new NotFoundHttpException(RedismanModule::t('redisman', 'key not found'));
-        }else{
-            list($type, $size, $ttl, $refcount, $idletype, $encoding) = $conn->executeCommand(
-                'EVAL', [$this->infoScript($key), 0]
+            throw new NotFoundHttpException(Redisman::t('redisman', 'key not found'));
+        }else {
+            list($type, $size, $ttl, $refcount, $idletype, $encoding) = Redisman::getInstance()->executeCommand(
+                'EVAL', [$this->infoScript($this->key), 0]
             );
-            switch($type){
-            case RedismanModule::REDIS_STRING:
-                $value = $this->getKeyVal($key, $type);
-                $formatvalue = $value;
-                break;
-            case RedismanModule::REDIS_HASH:
-            case RedismanModule::REDIS_ZSET:
-                if($size<5000){
-                    $value = $this->getKeyVal($key, $type);
-                    $value = $this->arrayAssociative($value);
-                    $formatvalue = Json::encode($value);
-                }else{
-                    //@TODO: big value
-                }
-                break;
-            case RedismanModule::REDIS_LIST:
-            case RedismanModule::REDIS_SET:
-                if($size<5000){
-                    $value = $this->getKeyVal($key, $type);
-                    $formatvalue = implode("\r\n",$value);
-                }else{
-                    //@TODO: big value
-                }
-            }
             $this->setAttributes(
                 ArrayHelper::merge(
                     [
                         'class' => 'insolita\redisman\models\RedisItem',
-                        'key'=>$key,
-                        'db' => $this->module->getCurrentDb(),
-                        'storage' => $this->module->getCurrentConn()
+                        'key'=>$this->key,
+                        'db' => Redisman::getInstance()->getCurrentDb(),
+                        'storage' => Redisman::getInstance()->getCurrentConn()
                     ],
-                    compact('value','formatvalue', 'type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
+                    compact('type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
                 ), false
             );
             $this->afterFind();
             return $this;
-
         }
-
     }
+
+    public function findValue(){
+        $value = $this->getKeyVal();
+        switch($this->type){
+        case Redisman::REDIS_STRING:
+            $formatvalue = $value;
+            break;
+        case Redisman::REDIS_HASH:
+        case Redisman::REDIS_ZSET:
+            if($this->size<5000){
+                $value = $this->arrayAssociative($value);
+                $formatvalue = Json::encode($value);
+            }else{
+                //@TODO: big value
+            }
+            break;
+        case Redisman::REDIS_LIST:
+        case Redisman::REDIS_SET:
+            if($this->size<5000){
+                $formatvalue = implode("\r\n",$value);
+            }else{
+                //@TODO: big value
+            }
+        }
+        $this->setAttributes(
+                compact('value','formatvalue')
+            , false
+        );
+        return $this;
+    }
+
 
     public function afterFind(){
         $this->oldAttributes=$this->getAttributes();
     }
 
     /**
-     * Get any redis key function
+     * Get any redis key
      *
-     * @param string $key
-     *
-     * @return bool
+     * @return bool|string|array
      */
-    public function getKeyVal($key, $type=null)
+    public function getKeyVal()
     {
-        if(!$type){
-            $type = $this->module->executeCommand('TYPE', [$key]);
-        }
-
-        switch($type){
-        case RedismanModule::REDIS_STRING: return $this->module->executeCommand('GET', [$key]);
-        case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('LRANGE', [$key, 0, -1]);
-        case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HGETALL', [$key]);
-        case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SMEMBERS', [$key]);
-        case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZRANGE', [$key, 0, -1, 'WITHSCORES']);
+        switch($this->type){
+        case Redisman::REDIS_STRING: return Redisman::getInstance()->executeCommand('GET', [$this->key]);
+        case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('LRANGE', [$this->key, 0, -1]);
+        case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HGETALL', [$this->key]);
+        case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('SMEMBERS', [$this->key]);
+        case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZRANGE', [$this->key, 0, -1, 'WITHSCORES']);
         default:return false;
         }
-
     }
 
     /**
@@ -292,15 +279,15 @@ class RedisItem extends Model
      */
     public function addKey($type, $key, $value)
     {
-        if ($type == RedismanModule::REDIS_STRING) {
-            return $this->module->executeCommand('SET',[$key, $value]);
+        if ($type == Redisman::REDIS_STRING) {
+            return Redisman::getInstance()->executeCommand('SET',[$key, $value]);
         } elseif (is_array($value)) {
             array_unshift($value, $key);
             switch($type){
-            case RedismanModule::REDIS_LIST:  return $this->module->executeCommand('RPUSH', $value);
-            case RedismanModule::REDIS_HASH: return $this->module->executeCommand('HMSET', $value);
-            case RedismanModule::REDIS_ZSET: return $this->module->executeCommand('SADD', $value);
-            case RedismanModule::REDIS_SET: return $this->module->executeCommand('ZADD', $value);
+            case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('RPUSH', $value);
+            case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HMSET', $value);
+            case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('SADD', $value);
+            case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('ZADD', $value);
             default:return false;
             }
 
@@ -312,14 +299,18 @@ class RedisItem extends Model
 
     public function persist(){
        if($this->ttl==-1){
-           $this->module->executeCommand('PERSIST', [$this->key]);
+           Redisman::getInstance()->executeCommand('PERSIST', [$this->key]);
        }else{
-           $this->module->executeCommand('EXPIRE', [$this->key, $this->ttl]);
+           Redisman::getInstance()->executeCommand('EXPIRE', [$this->key, $this->ttl]);
        }
     }
 
     public function move(){
-        $this->module->executeCommand('MOVE', [$this->key, $this->db]);
+        Redisman::getInstance()->executeCommand('MOVE', [$this->key, $this->db]);
+    }
+
+    public function delete(){
+        Redisman::getInstance()->executeCommand('DELETE', [$this->key]);
     }
 
     /**

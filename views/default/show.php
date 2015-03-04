@@ -5,7 +5,7 @@ use Zelenin\yii\SemanticUI\widgets\GridView;
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
+ * @var \insolita\redisman\Redisman $module
  * @var \yii\data\ArrayDataProvider $dataProvider
  */
 $module=$this->context->module;

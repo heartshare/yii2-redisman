@@ -1,11 +1,11 @@
 <?php
-use \insolita\redisman\RedismanModule;
+use \insolita\redisman\Redisman;
 use Zelenin\yii\SemanticUI\modules\Accordion;
 use \yii\helpers\Html;
 /**
  * @var \yii\web\View $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\RedismanModule $module
+ * @var \insolita\redisman\Redisman $module
  * @var array $info
  */
  $module=$this->context->module;
@@ -18,11 +18,11 @@ foreach($info as $section=>$data){
         if($key=='rdb_last_save_time'){
             $val=date('d.m.Y H:i:s',$val);
         }
-        $content.=Html::tag('tr', Html::tag('td', RedismanModule::t('redisman',$key)). Html::tag('td', $val));
+        $content.=Html::tag('tr', Html::tag('td', Redisman::t('redisman',$key)). Html::tag('td', $val));
     }
 
     $infoformat[]=[
-        'title'=>RedismanModule::t('redisman',$section),
+        'title'=>Redisman::t('redisman',$section),
         'content'=>Html::tag('table',$content,['class'=>"ui definition table"])
     ];
 }

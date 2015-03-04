@@ -3,7 +3,7 @@
  * @var View $this
  * @var string $content
  */
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\helpers\Html;
 use yii\web\Controller;
 use yii\web\View;
@@ -42,7 +42,7 @@ $this->beginPage();
                     <i class="wifi icon"></i>
                     <div class="content">
                         <?=$module->getCurrentName()?>
-                        <div class="sub header"><?=RedismanModule::t('redisman','Current Connection')?></div>
+                        <div class="sub header"><?=Redisman::t('redisman','Current Connection')?></div>
                     </div>
                 </h1>
 
@@ -52,39 +52,39 @@ $this->beginPage();
                         'encodeLabels' => false,
                         'items' => [
                             [
-                                'label' => '<i class="info circle icon blue"></i>' . RedismanModule::t(
+                                'label' => '<i class="info circle icon blue"></i>' . Redisman::t(
                                         'redisman', 'Info'
                                     ), 'url' => ['/redisman/default/index'],'options'=>['class'=>'blue item']
                             ],
                             [
-                                'label' => '<i class="privacy circle icon orange"></i>' . RedismanModule::t(
+                                'label' => '<i class="privacy circle icon orange"></i>' . Redisman::t(
                                         'redisman', 'List Keys'
                                     ), 'url' => ['/redisman/default/show'],'options'=>['class'=>'orange item']
                             ],
                             [
-                                'label' => '<i class="add circle icon green"></i>' . RedismanModule::t(
+                                'label' => '<i class="add circle icon green"></i>' . Redisman::t(
                                         'redisman', 'Add'
                                     ),'options'=>['class'=>'green item'],
                                 'items' => [
                                     [
-                                        'label' => RedismanModule::keyTyper(RedismanModule::REDIS_STRING),
-                                        'url' => ['/redisman/default/add', 'type' => RedismanModule::REDIS_STRING]
+                                        'label' => Redisman::keyTyper(Redisman::REDIS_STRING),
+                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_STRING]
                                     ],
                                     [
-                                        'label' => RedismanModule::keyTyper(RedismanModule::REDIS_LIST),
-                                        'url' => ['/redisman/default/add', 'type' => RedismanModule::REDIS_LIST]
+                                        'label' => Redisman::keyTyper(Redisman::REDIS_LIST),
+                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_LIST]
                                     ],
                                     [
-                                        'label' => RedismanModule::keyTyper(RedismanModule::REDIS_HASH),
-                                        'url' => ['/redisman/default/add', 'type' => RedismanModule::REDIS_HASH]
+                                        'label' => Redisman::keyTyper(Redisman::REDIS_HASH),
+                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_HASH]
                                     ],
                                     [
-                                        'label' => RedismanModule::keyTyper(RedismanModule::REDIS_SET),
-                                        'url' => ['/redisman/default/add', 'type' => RedismanModule::REDIS_SET]
+                                        'label' => Redisman::keyTyper(Redisman::REDIS_SET),
+                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_SET]
                                     ],
                                     [
-                                        'label' => RedismanModule::keyTyper(RedismanModule::REDIS_ZSET),
-                                        'url' => ['/redisman/default/add', 'type' => RedismanModule::REDIS_ZSET]
+                                        'label' => Redisman::keyTyper(Redisman::REDIS_ZSET),
+                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_ZSET]
                                     ],
                                 ]
                             ],
@@ -93,10 +93,10 @@ $this->beginPage();
                 )?>
 
                 <?= \insolita\redisman\widgets\Alert::widget([
-                        'successTitle'=>RedismanModule::t('redisman','Success!'),
-                        'errorTitle'=>RedismanModule::t('redisman','Error!'),
-                        'warningTitle'=>RedismanModule::t('redisman','Warning!'),
-                        'infoTitle'=>RedismanModule::t('redisman','Attention!!'),
+                        'successTitle'=>Redisman::t('redisman','Success!'),
+                        'errorTitle'=>Redisman::t('redisman','Error!'),
+                        'warningTitle'=>Redisman::t('redisman','Warning!'),
+                        'infoTitle'=>Redisman::t('redisman','Attention!!'),
                     ]) ?>
                 <?= $content ?>
             </div>

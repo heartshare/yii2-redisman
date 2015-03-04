@@ -5,7 +5,7 @@ namespace insolita\redisman\controllers;
 use insolita\redisman\models\ConnectionForm;
 use insolita\redisman\models\RedisItem;
 use insolita\redisman\models\RedisModel;
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -19,22 +19,10 @@ use yii\helpers\VarDumper;
 class DefaultController extends \yii\web\Controller
 {
     /**
-     * @var \insolita\redisman\RedismanModule $module
+     * @var \insolita\redisman\Redisman $module
      */
     public $module;
-    /**
-     * @var \yii\redis\Connection $_conn
-     */
-    private $_conn = null;
 
-    /**
-     *
-     */
-    public function init()
-    {
-        parent::init();
-        $this->_conn = $this->module->getConnection();
-    }
 
     /**
      * @return array
@@ -121,13 +109,13 @@ class DefaultController extends \yii\web\Controller
     {
         $model = new RedisItem();
         $key = urldecode($key);
-        $data = $model->find($key);
-        if($data->type==RedismanModule::REDIS_STRING){
+        $model->findInfo($key)->findValue();
+        if($model->type==Redisman::REDIS_STRING){
             $view='view_string';
         }else{
             $view='view';
         }
-        return $this->render($view, compact('key', 'data'));
+        return $this->render($view, compact('key', 'model'));
     }
 
     /**
@@ -135,11 +123,14 @@ class DefaultController extends \yii\web\Controller
      *
      * @return \yii\web\Response
      */
-    public function actionDelete($key)
+    public function actionDelete()
     {
+        $model=new RedisItem();
+        $model->scenario='delete';
+        $model->load(\Yii::$app->request->post());
+        $model->findInfo();
 
-        $key = urldecode($key);
-        $this->_conn->executeCommand('DEL', [$key]);
+        $model->delete();
         return $this->redirect(Url::to(['/redisman/default/show']));
     }
 
@@ -174,7 +165,7 @@ class DefaultController extends \yii\web\Controller
         if($model->validate()){
             $model->move();
             \Yii::$app->session->setFlash(
-                'success', RedismanModule::t(
+                'success', Redisman::t(
                     'redisman', 'Key moved from Db№ {from} to {to}',
                     ['from' => $this->module->getCurrentDb(), 'to' => $model->db]
                 )
@@ -206,7 +197,7 @@ class DefaultController extends \yii\web\Controller
             $this->module->setConnection($model->connection, $model->db);
             RedisModel::resetFilter();
             \Yii::$app->session->setFlash(
-                'success', RedismanModule::t('redisman', 'Switched to') . $this->module->getCurrentName()
+                'success', Redisman::t('redisman', 'Switched to') . $this->module->getCurrentName()
             );
         } else {
             \Yii::$app->session->setFlash('error', Html::errorSummary($model));
@@ -223,7 +214,7 @@ class DefaultController extends \yii\web\Controller
     {
         $model = new RedisModel();
         if ($model->load(\Yii::$app->request->post()) && $model->storeFilter()) {
-            \Yii::$app->session->setFlash('success', RedismanModule::t('redisman', 'Search query updated!'));
+            \Yii::$app->session->setFlash('success', Redisman::t('redisman', 'Search query updated!'));
             return $this->redirect(['show']);
         } else {
             \Yii::$app->session->setFlash('error', Html::errorSummary($model));
@@ -241,7 +232,7 @@ class DefaultController extends \yii\web\Controller
             echo 'ok';
         } else {
             \Yii::$app->session->setFlash(
-                'success', RedismanModule::t('redisman', 'database saving run in background')
+                'success', Redisman::t('redisman', 'database saving run in background')
             );
             return $this->redirect(['index']);
         }
@@ -256,7 +247,7 @@ class DefaultController extends \yii\web\Controller
         if (\Yii::$app->request->isAjax) {
             echo 'ok';
         } else {
-            \Yii::$app->session->setFlash('success', RedismanModule::t('redisman', 'Clearind Database'));
+            \Yii::$app->session->setFlash('success', Redisman::t('redisman', 'Clearind Database'));
             return $this->redirect(['index']);
         }
     }

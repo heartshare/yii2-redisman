@@ -9,7 +9,7 @@
 namespace insolita\redisman\models;
 
 
-use insolita\redisman\RedismanModule;
+use insolita\redisman\Redisman;
 use yii\base\Model;
 
 /**
@@ -30,7 +30,7 @@ class ConnectionForm extends Model
     public $db;
 
     /**
-     * @var \insolita\redisman\RedismanModule $module
+     * @var \insolita\redisman\Redisman $module
      **/
     private $module;
 
@@ -64,8 +64,8 @@ class ConnectionForm extends Model
     public function attributeLabels()
     {
         return [
-            'connection' => RedismanModule::t('redisman', 'Connection'),
-            'db' => RedismanModule::t('redisman', 'Database')
+            'connection' => Redisman::t('redisman', 'Connection'),
+            'db' => Redisman::t('redisman', 'Database')
         ];
     }
 
@@ -80,7 +80,7 @@ class ConnectionForm extends Model
         if (!$this->hasErrors('connection')) {
             $totalDbCount = $this->module->totalDbCount();
             if ($this->$attribute >= $totalDbCount[$this->connection]) {
-                $this->addError($attribute, RedismanModule::t('redisman','Database with current number not allowed for this connection'));
+                $this->addError($attribute, Redisman::t('redisman','Database with current number not allowed for this connection'));
                 return false;
             }
             return true;
