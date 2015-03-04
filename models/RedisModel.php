@@ -39,19 +39,7 @@ class RedisModel extends Model
      */
     public $encache;
 
-    /**
-     * @var \insolita\redisman\Redisman $module
-     **/
-    private $module;
 
-    /**
-     * @inherit
-     */
-    public function init()
-    {
-        parent::init();
-        $this->module = \Yii::$app->getModule('redisman');
-    }
 
     /**
      * @return array the validation rules.
@@ -121,7 +109,7 @@ class RedisModel extends Model
     protected function getSearchId()
     {
         return $this->pattern . ':' . implode('', $this->type) . ":" . $this->perpage . ":"
-        . $this->module->getCurrentConn() . ":" . $this->module->getCurrentDb() . ':' . $this->module->greedySearch;
+        . Redisman::getInstance()->getCurrentConn() . ":" . Redisman::getInstance()->getCurrentDb() . ':' . Redisman::getInstance()->greedySearch;
     }
 
 
@@ -141,9 +129,9 @@ class RedisModel extends Model
             $data = \Yii::$app->cache->get($this->getSearchId() . ':' . $page, null);
         }
         if (!$data) {
-            $queryScript = (!$this->module->greedySearch) ? $this->scriptBuilder($start, $end)
+            $queryScript = (!Redisman::getInstance()->greedySearch) ? $this->scriptBuilder($start, $end)
                 : $this->scriptBuilderGreedy();
-            $data = $this->module->executeCommand('EVAL', [$queryScript, 0]);
+            $data = Redisman::getInstance()->executeCommand('EVAL', [$queryScript, 0]);
 
         }
         if (!empty($data)) {
@@ -156,7 +144,7 @@ class RedisModel extends Model
             }
             if ($this->encache) {
                 \Yii::$app->cache->set(
-                    $this->getSearchId() . ':' . $page, $allModels, $this->module->queryCacheDuration
+                    $this->getSearchId() . ':' . $page, $allModels, Redisman::getInstance()->queryCacheDuration
                 );
             }
         } else {
@@ -164,7 +152,7 @@ class RedisModel extends Model
             $totalcount = 0;
         }
 
-        return (!$this->module->greedySearch)
+        return (!Redisman::getInstance()->greedySearch)
             ? new PartialDataProvider(
                 [
                     'key' => 'id',
@@ -346,7 +334,7 @@ local tp
 all_keys[#all_keys+1]=count;
 return all_keys;
 EOF;
-        return ($this->module->searchMethod == 'SCAN') ? $scriptScan : $scriptKeys;
+        return (Redisman::getInstance()->searchMethod == 'SCAN') ? $scriptScan : $scriptKeys;
     }
 
     /**
@@ -430,6 +418,6 @@ local tp
 all_keys[#all_keys+1]=count;
 return all_keys;
 EOF;
-        return ($this->module->searchMethod == 'SCAN') ? $scriptScan : $scriptKeys;
+        return (Redisman::getInstance()->searchMethod == 'SCAN') ? $scriptScan : $scriptKeys;
     }
 }
