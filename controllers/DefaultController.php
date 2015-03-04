@@ -109,7 +109,7 @@ class DefaultController extends \yii\web\Controller
     {
         $model = new RedisItem();
         $key = urldecode($key);
-        $model->findInfo($key)->findValue();
+        $model->find($key)->findValue();
         if($model->type==Redisman::REDIS_STRING){
             $view='view_string';
         }else{
@@ -119,18 +119,18 @@ class DefaultController extends \yii\web\Controller
     }
 
     /**
-     * @param $key
-     *
      * @return \yii\web\Response
      */
     public function actionDelete()
     {
         $model=new RedisItem();
         $model->scenario='delete';
-        $model->load(\Yii::$app->request->post());
-        $model->findInfo();
+        if($model->load(\Yii::$app->request->post())){
+            $model->delete();
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
+        }
 
-        $model->delete();
         return $this->redirect(Url::to(['/redisman/default/show']));
     }
 
@@ -141,7 +141,7 @@ class DefaultController extends \yii\web\Controller
     {
         $model=new RedisItem();
         $model->scenario='persist';
-        if($model->validate()){
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
             $model->persist();
         }else{
             \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
@@ -151,18 +151,13 @@ class DefaultController extends \yii\web\Controller
     }
 
     /**
-     * @param $key
-     * @param $db
-     *
      * @return \yii\web\Response
      */
-    public function actionMove($key, $db)
+    public function actionMove()
     {
-        $key = urldecode($key);
         $model=new RedisItem();
         $model->scenario='move';
-        $model->setAttributes($key,$db);
-        if($model->validate()){
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
             $model->move();
             \Yii::$app->session->setFlash(
                 'success', Redisman::t(

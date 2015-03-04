@@ -190,7 +190,7 @@ class RedisItem extends Model
         ];
     }
 
-    public function findInfo(){
+    public function find(){
         $info = Redisman::getInstance()->executeCommand(
             'EVAL', [$this->infoScript($this->key), 0]
         );
