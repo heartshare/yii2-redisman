@@ -89,14 +89,16 @@ class DefaultController extends \yii\web\Controller
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionUpdate($key)
+    public function actionUpdate()
     {
-        $model = new RedisItem();
-        $key = urldecode($key);
-        $info = $model->find($key);
+        $key=\Yii::$app->request->post('key',null);
+        $model = RedisItem::find(urldecode($key))->findValue();
+        $model->scenario='update';
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+            $model->save();
+        }
 
-        return $this->render('update');
-
+        return $this->redirect(['view','key'=>urlencode($key)]);
     }
 
     /**
@@ -107,15 +109,9 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionView($key)
     {
-        $model = new RedisItem();
-        $key = urldecode($key);
-        $model->find($key)->findValue();
-        if($model->type==Redisman::REDIS_STRING){
-            $view='view_string';
-        }else{
-            $view='view';
-        }
-        return $this->render($view, compact('key', 'model'));
+        $model = RedisItem::find(urldecode($key))->findValue();
+
+        return $this->render('view', compact('model'));
     }
 
     /**

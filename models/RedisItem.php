@@ -10,6 +10,7 @@ namespace insolita\redisman\models;
 
 use insolita\redisman\Redisman;
 use yii\base\Model;
+use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
@@ -190,59 +191,50 @@ class RedisItem extends Model
         ];
     }
 
-    public function find(){
-        $info = Redisman::getInstance()->executeCommand(
-            'EVAL', [$this->infoScript($this->key), 0]
+    public static function find($key){
+        $ex = Redisman::getInstance()->executeCommand(
+            'EXISTS', [$key]
         );
-        if(!$info){
+        if(!$ex){
             throw new NotFoundHttpException(Redisman::t('redisman', 'key not found'));
         }else {
             list($type, $size, $ttl, $refcount, $idletype, $encoding) = Redisman::getInstance()->executeCommand(
-                'EVAL', [$this->infoScript($this->key), 0]
+                'EVAL', [self::infoScript($key), 0]
             );
-            $this->setAttributes(
+            $model=new static;
+            $model->setAttributes(
                 ArrayHelper::merge(
                     [
                         'class' => 'insolita\redisman\models\RedisItem',
-                        'key'=>$this->key,
+                        'key'=>$key,
                         'db' => Redisman::getInstance()->getCurrentDb(),
                         'storage' => Redisman::getInstance()->getCurrentConn()
                     ],
                     compact('type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
                 ), false
             );
-            $this->afterFind();
-            return $this;
+            $model->afterFind();
+            return $model;
         }
     }
 
     public function findValue(){
-        $value = $this->getKeyVal();
+        $this->value = $this->getKeyVal();
         switch($this->type){
         case Redisman::REDIS_STRING:
-            $formatvalue = $value;
+            $this->formatvalue = $this->value;
             break;
         case Redisman::REDIS_HASH:
         case Redisman::REDIS_ZSET:
-            if($this->size<5000){
-                $value = $this->arrayAssociative($value);
-                $formatvalue = Json::encode($value);
-            }else{
-                //@TODO: big value
-            }
+                $this->value = $this->arrayAssociative($this->value);
+                $this->formatvalue =$this->searchVal();
             break;
         case Redisman::REDIS_LIST:
         case Redisman::REDIS_SET:
-            if($this->size<5000){
-                $formatvalue = implode("\r\n",$value);
-            }else{
-                //@TODO: big value
-            }
+                $this->formatvalue = implode("\r\n",$this->value);
         }
-        $this->setAttributes(
-                compact('value','formatvalue')
-            , false
-        );
+        $this->oldAttributes['value']=$this->value;
+        $this->oldAttributes['formatvalue']=$this->formatvalue;
         return $this;
     }
 
@@ -266,6 +258,45 @@ class RedisItem extends Model
         case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZRANGE', [$this->key, 0, -1, 'WITHSCORES']);
         default:return false;
         }
+    }
+
+    public function searchVal(){
+        $totalcount = count($this->value);
+        $allModels =$sort= [];
+        if($this->type==Redisman::REDIS_HASH){
+            foreach ($this->value as $i => $row) {
+                $allModels[] = [
+                    'field' => $i, 'value' => $row[$i]
+                ];
+                $sort=[
+                    'attributes' => ['field', 'value'],
+                    'defaultOrder'=>['field'=>SORT_ASC]
+                ];
+            }
+        }elseif($this->type==Redisman::REDIS_ZSET){
+            foreach ($this->value as $i => $row) {
+                $allModels[] = [
+                    'score' => $i, 'field' => $row[$i]
+                ];
+                $sort=[
+                    'attributes' => ['field', 'score'],
+                    'defaultOrder'=>['field'=>SORT_ASC]
+                ];
+            }
+        }else{
+            return false;
+        }
+
+        return new ArrayDataProvider([
+                'key' => 'field',
+                'allModels' => $allModels,
+                'totalCount' => $totalcount,
+                'sort' =>$sort,
+                'pagination' => [
+                    'totalCount' => $totalcount,
+                    'pageSize' => 20,
+                ]
+            ]);
     }
 
     /**
@@ -320,7 +351,7 @@ class RedisItem extends Model
      *
      * @return array
      */
-    protected function arrayAssociative($arr)
+    protected  function arrayAssociative($arr)
     {
         $newarr = [];
         if (!empty($arr) && count($arr) % 2 == 0) {
@@ -333,6 +364,7 @@ class RedisItem extends Model
         return $newarr;
     }
 
+
     /**
      * Generate script for searching key information
      *
@@ -340,14 +372,10 @@ class RedisItem extends Model
      *
      * @return string
      */
-    protected function infoScript($key)
+    protected static function infoScript($key)
     {
         $script
             = <<<EOF
-local iskey = redis.call("EXISTS", "$key");
-if iskey=="0" then
-return 0
-end
 local tp=redis.call("TYPE", "$key")["ok"]
 local size=9999
 if tp == "string" then
@@ -365,7 +393,7 @@ else
 end
 local info={tp, size, redis.call("TTL", "$key"),
             redis.call("OBJECT","REFCOUNT", "$key"),redis.call("OBJECT","IDLETIME", "$key"),
-            redis.call("OBJECT", "ENCODING", "$key"),redis.call("TTL", "$key")};
+            redis.call("OBJECT", "ENCODING", "$key")};
 return info;
 EOF;
         return $script;

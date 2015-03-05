@@ -2,14 +2,14 @@
 use insolita\redisman\Redisman;
 use yii\helpers\Html;
 use Zelenin\yii\SemanticUI\widgets\DetailView;
- /**
+
+/**
  * @var \yii\web\View                                    $this
  * @var \insolita\redisman\controllers\DefaultController $context
- * @var \insolita\redisman\Redisman                $module
- * @var string                                           $key
+ * @var \insolita\redisman\Redisman                      $module
  * @var \insolita\redisman\models\RedisItem              $model
  */
- $module = $this->context->module;
+$module = $this->context->module;
 $this->title = $module->getCurrentName();
 $dblist = $module->dbList();
 $items = [];
@@ -21,7 +21,7 @@ foreach ($dblist as $db => $dbalias) {
                 $dbalias, \yii\helpers\Url::to(
                     [
                         '/redisman/default/move',
-                        'key' => urlencode($key),
+                        'key' => urlencode($model->key),
                         'db' => $db
                     ]
                 ), [
@@ -39,7 +39,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
 
 <div class="ui teal pointed segment">
     <h1 class="ui header">
-        <div class="sub header "><i class="icon privacy"></i><?= Html::encode($key) ?></div>
+        <div class="sub header "><i class="icon privacy"></i><?= Html::encode($model->key) ?></div>
     </h1>
     <div class="ui two column grid">
         <div class="column">
@@ -52,15 +52,16 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                         'attributes' => [
                             'size',
                             [
-                                'attribute' =>'ttl','format'=>'raw',
-                                'value'=>$model->ttl.
-                                    '<br/><form action="'.\yii\helpers\Url::to(['/redisman/default/persist']).'" method="post">
+                                'attribute' => 'ttl', 'format' => 'raw',
+                                'value' => $model->ttl .
+                                    '<br/><form action="' . \yii\helpers\Url::to(['/redisman/default/persist']) . '" method="post">
                                     <div class="ui action mini input">
-  <input placeholder="'.Redisman::t('redisman','Set TTl (-1 for persist)').'" type="text" name="RedisItem[ttl]">
-  <input type="hidden" name="RedisItem[key]" value="'.$key.'">
+  <input placeholder="' . Redisman::t('redisman', 'Set TTl (-1 for persist)') . '" type="text" name="RedisItem[ttl]">
+  <input type="hidden" name="RedisItem[key]" value="' . $model->key . '">
   <button class="ui blue icon button">
     <i class="save icon"></i>
-  </button></form></div>'
+  </button><input type="hidden" name="' . Yii::$app->getRequest()->csrfParam . '" value="' . Yii::$app->getRequest()
+                                        ->getCsrfToken() . '"></form></div>'
                             ],
                             'refcount', 'idletime',
                             [
@@ -83,67 +84,14 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
         <div class="column">
             <div class="ui segment">
                 <a class="ui right ribbon blue label"><?= Redisman::t('redisman', 'Value') ?></a>
-                <div class="ui top attached tabular menu">
-                    <div class="active item" data-tab="tabedit"><?=Redisman::t('redisman','Edit')?></div>
-                    <div class="item" data-tab="tabappend"><?=Redisman::t('redisman','Append')?></div>
-                </div>
-                <div class="ui bottom attached active tab segment"  data-tab="tabedit">
-                <p>
-                    <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
-                        [
-                            'action' => ['/redisman/default/update']
-                        ]
-                    )?>
-                    <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
-                <div class="one">
-                    <?php
-                        echo $form->field($model, 'formatvalue')->widget(
-                            \lav45\aceEditor\AceEditorWidget::className(), [
-                                'mode' => 'text',
-                                'fontSize' => 15,
-                                'height' => 200,
-                                'options'=>[ 'id'=>'editfield']
-                            ]
-                        );
-                     ?>
-                </div>
-                <div class="one">
-                    <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Replace') ?>
-                    </button>
-                </div>
-                <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>
-                </p></div>
-
-                    <div class="ui bottom attached  tab segment"  data-tab="tabappend">
-                        <p>
-                            <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
-                                [
-                                    'action' => ['/redisman/default/update']
-                                ]
-                            )?>
-                            <input type="hidden" name="RedisItem[key]" value="<?=$key?>">
-                        <div class="one">
-                            <?php
-                            echo $form->field($model, 'appendvalue')->widget(
-                                \lav45\aceEditor\AceEditorWidget::className(), [
-                                    'mode' => 'text',
-                                    'fontSize' => 15,
-                                    'height' => 200,
-                                    'options'=>[ 'id'=>'appendfield']
-
-                                ]
-                            );
-                            ?>
-                        </div>
-                        <div class="one">
-                            <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Replace') ?>
-                            </button>
-                        </div>
-                        <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>
-                        </p>
-                    </div>
-
+                <?php if ($model->type == Redisman::REDIS_STRING): ?>
+                    <?= $this->render('form_string', ['model' => $model]) ?>
+                <?php elseif($model->type == Redisman::REDIS_SET || $model->type == Redisman::REDIS_LIST):?>
+                     <?=$this->render('form_list', ['model' => $model])?>
+                <?php else:?>
+                    <?=$this->render('form_hash', ['model' => $model])?>
+                <?php endif ?>
+            </div>
         </div>
     </div>
 </div>
-    <?=$this->registerJs("$('.tabular.menu .item').tab();")?>
