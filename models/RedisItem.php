@@ -89,10 +89,17 @@ class RedisItem extends Model
     public function rules()
     {
         return [
+            ['key','required'],
+            [['db'],'required','on'=>'move'],
+            [['ttl'],'required','on'=>'persist'],
+            [['formatvalue'],'required','on'=>['create','update','append']],
+
             ['key','string'],
             ['key','keyExists'],
+
             ['db','integer','min'=>0],
             ['db','dbValidator','on'=>'move'],
+
             [['type'], 'in','range'=>array_keys(Redisman::$types)],
             [['value'], 'string', 'when'=>function($model){return $model->type==Redisman::REDIS_STRING;}],
             [['formatvalue'], 'string'],
@@ -109,7 +116,7 @@ class RedisItem extends Model
     {
         return [
             'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
-            'update' => ['key','value','formatvalue',  'ttl'],
+            'update' => ['key','value','formatvalue'],
             'append' => ['key','value','formatvalue'],
             'persist' => ['key','ttl'],
             'move' => ['key','db'],
@@ -127,10 +134,10 @@ class RedisItem extends Model
     }
 
     public function dbValidator($attribute, $params){
-          if($this->$attribute==$this->oldAttributes[$attribute]){
+          if($this->$attribute==Redisman::getInstance()->getCurrentDb()){
               $this->addError($attribute,Redisman::t('redisman', 'Bad idea - try move in itself'));
               return false;
-          }elseif(!is_array($this->$attribute, Redisman::getInstance()->dbList())){
+          }elseif(!in_array($this->$attribute, array_keys(Redisman::getInstance()->dbList()))){
               $this->addError($attribute,Redisman::t('redisman', 'Try to move in unavailable db'));
               return false;
           }
@@ -341,7 +348,7 @@ class RedisItem extends Model
     }
 
     public function delete(){
-        Redisman::getInstance()->executeCommand('DELETE', [$this->key]);
+        Redisman::getInstance()->executeCommand('DEL', [$this->key]);
     }
 
     /**
