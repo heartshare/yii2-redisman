@@ -226,7 +226,7 @@ class RedisItem extends Model
     }
 
     public function findValue(){
-        $this->value = $this->getKeyVal();
+        $this->value = $this->getValue();
         switch($this->type){
         case Redisman::REDIS_STRING:
             $this->formatvalue = $this->value;
@@ -234,11 +234,13 @@ class RedisItem extends Model
         case Redisman::REDIS_HASH:
         case Redisman::REDIS_ZSET:
                 $this->value = $this->arrayAssociative($this->value);
-                $this->formatvalue =$this->searchVal();
+                $this->formatvalue =$this->valueDataProvider();
             break;
         case Redisman::REDIS_LIST:
         case Redisman::REDIS_SET:
                 $this->formatvalue = implode("\r\n",$this->value);
+            break;
+
         }
         $this->oldAttributes['value']=$this->value;
         $this->oldAttributes['formatvalue']=$this->formatvalue;
@@ -255,7 +257,7 @@ class RedisItem extends Model
      *
      * @return bool|string|array
      */
-    public function getKeyVal()
+    public function getValue()
     {
         switch($this->type){
         case Redisman::REDIS_STRING: return Redisman::getInstance()->executeCommand('GET', [$this->key]);
@@ -267,13 +269,13 @@ class RedisItem extends Model
         }
     }
 
-    public function searchVal(){
+    public function valueDataProvider(){
         $totalcount = count($this->value);
         $allModels =$sort= [];
         if($this->type==Redisman::REDIS_HASH){
-            foreach ($this->value as $i => $row) {
+            foreach ($this->value as $key => $val) {
                 $allModels[] = [
-                    'field' => $i, 'value' => $row[$i]
+                    'field' => $key, 'value' => $val
                 ];
                 $sort=[
                     'attributes' => ['field', 'value'],
@@ -281,9 +283,9 @@ class RedisItem extends Model
                 ];
             }
         }elseif($this->type==Redisman::REDIS_ZSET){
-            foreach ($this->value as $i => $row) {
+            foreach ($this->value as $key => $val) {
                 $allModels[] = [
-                    'score' => $i, 'field' => $row[$i]
+                    'score' => $val, 'field' => $key
                 ];
                 $sort=[
                     'attributes' => ['field', 'score'],
