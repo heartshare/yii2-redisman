@@ -3,12 +3,10 @@ namespace insolita\redisman\controllers;
 
 
 use insolita\redisman\models\ConnectionForm;
-use insolita\redisman\models\RedisItem;
 use insolita\redisman\models\RedisModel;
 use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
-use yii\helpers\Url;
 use yii\helpers\VarDumper;
 
 /**
@@ -46,7 +44,6 @@ class DefaultController extends \yii\web\Controller
                     'flushdb' => ['post'],
                     'search' => ['post'],
                     'dbload' => ['post'],
-                    'move' => ['post'],
                 ],
             ]
         ];

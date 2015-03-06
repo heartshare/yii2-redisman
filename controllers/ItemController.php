@@ -11,11 +11,45 @@ namespace insolita\redisman\controllers;
 
 use insolita\redisman\models\RedisItem;
 use insolita\redisman\Redisman;
+use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\web\Controller;
 
 class ItemController extends Controller{
+    /**
+     * @var \insolita\redisman\Redisman $module
+     */
+    public $module;
+
+
+    /**
+     * @return array
+     */
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::className(),
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'move' => ['post'],
+                    'delete' => ['post'],
+                    'remfield' => ['post'],
+                    'persist' => ['post'],
+                ],
+            ]
+        ];
+    }
+
     /**
      * @param $type
      *
