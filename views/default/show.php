@@ -23,13 +23,20 @@ $this->title=$module->getCurrentName();
                 ,'type','size','ttl',
                 [
                     'class'=>'\yii\grid\ActionColumn',
-                    'template'=>'{view}  {delete}',
+                    'template'=>'{quick} {view}  {delete}',
                     'buttons' => [
+                        'quick' => function ($url, $model) {
+                            return  Html::a(
+                                '<i class="icon circular large eye green"></i>',
+                                \yii\helpers\Url::to(['/redisman/default/quick', 'key' => urlencode($model['key'])]),
+                                ['data-pjax' => 0, 'class'=>'modalink', 'title'=>Yii::t('app','Quick View')]
+                            );
+                        },
                         'view' => function ($url, $model) {
                             return  Html::a(
                                 '<i class="icon circular inverted eye green"></i>',
                                 \yii\helpers\Url::to(['view', 'key' => urlencode($model['key'])]),
-                                ['data-pjax' => 0, 'data-modaler'=>true, 'title'=>Yii::t('app','View')]
+                                ['data-pjax' => 0, 'title'=>Yii::t('app','View')]
                             );
                         },
                         'delete' => function ($url, $model) {
@@ -49,3 +56,31 @@ $this->title=$module->getCurrentName();
             ]
         ])?>
 </div>
+
+<?php
+$modal =\Zelenin\yii\SemanticUI\modules\Modal::begin([
+        'id'=>'quickmodal',
+        'size' => \Zelenin\yii\SemanticUI\modules\Modal::SIZE_LARGE,
+        'header' => \insolita\redisman\Redisman::t('redisman','Key Information'),
+        'actions'=>\Zelenin\yii\SemanticUI\Elements::button(\insolita\redisman\Redisman::t('redisman','Close'), ['class' => 'black'])
+    ]);
+?>
+    <div class="content"></div>
+<?php
+$modal::end();
+
+$this->registerJs('
+   $(document).on("click",".modalink",function(e){
+       e.preventDefault();
+       var url=$(this).attr("href");
+$.get(url,function(data){
+$("#quickmodal .content").html(data);
+$("#quickmodal").modal({onHide:function(){ $("#quickmodal .content").html("");}}).modal("show");
+});
+
+   });
+');
+
+
+/** **/
+?>

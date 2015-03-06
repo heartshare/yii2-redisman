@@ -20,6 +20,8 @@ use insolita\redisman\Redisman;
             ]
         )?>
         <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
+        <input type="hidden" name="page" value="<?=(int)Yii::$app->request->get('page',1)?>">
+
     <div class="one">
         <?php
         echo \Zelenin\yii\SemanticUI\widgets\GridView::widget([
@@ -34,18 +36,19 @@ use insolita\redisman\Redisman;
                          }
                      ],
                      [
-                         'class'=>'yii\grid\ActionColumn',
+                         'class'=>'\yii\grid\ActionColumn',
                          'template'=>'{remove}',
                          'buttons'=>[
                              'remove'=>function($url,$data)use($model){
-                                 return \yii\helpers\Html::a('<i class="icon save"></i>',['/redisman/default/remfield', 'key'=>$model->key,'field'=>$data['field']]);
+                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/default/remfield', 'key'=>$model->key,'field'=>$data['field']]);
                              }
                          ]
                      ]
                  ]
             ])
         ?>
-    </div>
+    </div>    <br/>
+
     <div class="one">
         <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Update') ?>
         </button>

@@ -88,8 +88,10 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                     <?= $this->render('form_string', ['model' => $model]) ?>
                 <?php elseif($model->type == Redisman::REDIS_SET || $model->type == Redisman::REDIS_LIST):?>
                      <?=$this->render('form_list', ['model' => $model])?>
-                <?php else:?>
+                <?php elseif($model->type==Redisman::REDIS_HASH):?>
                     <?=$this->render('form_hash', ['model' => $model])?>
+                <?php else:?>
+                    <?=$this->render('form_zset', ['model' => $model])?>
                 <?php endif ?>
             </div>
         </div>

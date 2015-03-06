@@ -56,7 +56,7 @@ class RedisModel extends Model
             [['type'], 'typeValidatior'],
             [
                 'pattern', 'filter', 'filter' => function ($val) {
-                return addcslashes(str_replace("'", "\\'", $val), "\000\n\r\\\032");
+                return Redisman::quoteValue($val);
             }
             ],
             ['pattern', 'string', 'min' => 1, 'max' => 300],
@@ -264,7 +264,7 @@ local count=0;
 local size=0
 local tp
 repeat
-    local result = redis.call("SCAN", cursor, "match", "{$this->pattern}", "count", 50)
+    local result = redis.call("SCAN", cursor, "match", {$this->pattern}, "count", 50)
     cursor = result[1];
     keys = result[2];
     for i, key in ipairs(keys) do
@@ -306,7 +306,7 @@ local count=0;
 local size=0
 local tp
 
-    local result = redis.call("KEYS", "{$this->pattern}")
+    local result = redis.call("KEYS", {$this->pattern})
     for i, key in ipairs(result) do
         tp=redis.call("TYPE", key)["ok"]
         if count>=$start and count<$end then
@@ -354,7 +354,7 @@ local count=0;
 local size=0
 local tp
 repeat
-    local result = redis.call("SCAN", cursor, "match", "{$this->pattern}", "count", 50)
+    local result = redis.call("SCAN", cursor, "match", {$this->pattern}, "count", 50)
     cursor = result[1];
     keys = result[2];
     for i, key in ipairs(keys) do
@@ -392,7 +392,7 @@ local all_keys = {};
 local count=0;
 local size=0
 local tp
-    local result = redis.call("KEYS", "{$this->pattern}")
+    local result = redis.call("KEYS", {$this->pattern})
     for i, key in ipairs(result) do
         tp=redis.call("TYPE", key)["ok"]
            if $typecond then

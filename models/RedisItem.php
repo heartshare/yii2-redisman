@@ -383,26 +383,27 @@ class RedisItem extends Model
      */
     protected static function infoScript($key)
     {
-        $script
+        $key=Redisman::quoteValue($key);
+         $script
             = <<<EOF
-local tp=redis.call("TYPE", "$key")["ok"]
+local tp=redis.call("TYPE", $key)["ok"]
 local size=9999
 if tp == "string" then
-    size=redis.call("STRLEN", "$key")
+    size=redis.call("STRLEN", $key)
 elseif tp == "hash" then
-    size=redis.call("HLEN", "$key")
+    size=redis.call("HLEN", $key)
 elseif tp == "list" then
-    size=redis.call("LLEN", "$key")
+    size=redis.call("LLEN", $key)
 elseif tp == "set" then
-    size=redis.call("SCARD", "$key")
+    size=redis.call("SCARD", $key)
 elseif tp == "zset" then
-    size=redis.call("ZCARD", "$key")
+    size=redis.call("ZCARD", $key)
 else
     size=9999
 end
-local info={tp, size, redis.call("TTL", "$key"),
-            redis.call("OBJECT","REFCOUNT", "$key"),redis.call("OBJECT","IDLETIME", "$key"),
-            redis.call("OBJECT", "ENCODING", "$key")};
+local info={tp, size, redis.call("TTL", $key),
+            redis.call("OBJECT","REFCOUNT", $key),redis.call("OBJECT","IDLETIME", $key),
+            redis.call("OBJECT", "ENCODING", $key)};
 return info;
 EOF;
         return $script;

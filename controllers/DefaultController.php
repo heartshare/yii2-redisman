@@ -115,6 +115,19 @@ class DefaultController extends \yii\web\Controller
     }
 
     /**
+     * @param $key
+     *
+     * @return string
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionQuick($key)
+    {
+        $model = RedisItem::find(urldecode($key))->findValue();
+
+        return $this->renderAjax('_quick', compact('model'));
+    }
+
+    /**
      * @return \yii\web\Response
      */
     public function actionDelete()

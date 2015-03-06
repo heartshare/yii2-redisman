@@ -17,7 +17,8 @@
         ]
     );
     ?>
-</div>
+</div>    <br/>
+
 <div class="one">
     <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Replace') ?>
     </button>

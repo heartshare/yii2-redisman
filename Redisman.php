@@ -366,4 +366,13 @@ class Redisman extends Module
         return \Yii::t('insolita/redisman/'.$category, $message, $params, $language);
     }
 
+    public static  function quoteValue($str)
+    {
+        if (!is_string($str) && !is_int($str)) {
+            return $str;
+        }
+
+        return "'" . addcslashes(str_replace("'", "\'", $str), "\000\n\r\\\032") . "'";
+    }
+
 } 
