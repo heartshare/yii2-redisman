@@ -54,6 +54,13 @@ class Redisman extends Module
     public $defRedis = null;
 
     /**
+     * @var string $defPattern - default search pattern
+     **/
+
+    public $defPattern = '*:*';
+
+
+    /**
      * @var int $queryCacheDuration - duration of search query cache (only if enable cache option in search interface)
      **/
 
@@ -371,8 +378,37 @@ class Redisman extends Module
         if (!is_string($str) && !is_int($str)) {
             return $str;
         }
+        $str=addcslashes($str, "\000\n\r\032");
+        $squotes=substr_count($str, "'");
+        $mquotes=substr_count($str, '"');
+        $dslashes=substr_count($str, '\\\\');
+        $sslahes=substr_count($str, '\\');
+        if($sslahes/2 !==$dslashes){
+            $str=str_replace('\\\\','{~dslash~}',$str);
+            $str=str_replace('\\','\\\\',$str);
+            $str=str_replace('{~dslash~}','\\\\\\\\',$str);
+        }
 
-        return "'" . addcslashes(str_replace("'", "\'", $str), "\000\n\r\\\032") . "'";
+        if($mquotes && !$squotes){
+            return ($mquotes%2==0)?"'".$str."'":"'".str_replace('"','\"', $str)."'";
+        }elseif(!$mquotes && $squotes){
+            return ($squotes%2==0)?'"'.$str.'"':'"'.str_replace("'","\'", $str).'"';
+        }elseif(!$squotes && !$mquotes){
+            return "'".$str."'";
+        }else{
+            $str=str_replace('"','\"', $str);
+            $str=str_replace("'","\'", $str);
+            return "'".$str."'";
+        }
+
+    /*    if(strpos($str,'"')!==false && strpos($str,"'")===false){
+            return "'" . addcslashes(str_replace('"','\"', $str), "\000\n\r\032") . "'";
+        }elseif(strpos($str,'"')===false && strpos($str,"'")!==false){
+            return '"' . addcslashes(str_replace("'", "\'", $str), "\000\n\r\032") .'"';
+        }elseif(strpos($str,'"')===false && strpos($str,"'")===false){
+            return "'" . addcslashes($str, "\000\n\r\\\032") . "'";
+        }
+*/
     }
 
 } 

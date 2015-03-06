@@ -48,17 +48,13 @@ class RedisModel extends Model
     {
         return [
             [['type'], 'default', 'value' => array_keys(Redisman::$types)],
-            [['pattern'], 'default', 'value' => '*:*'],
+            [['pattern'], 'default', 'value' => Redisman::getInstance()->defPattern],
             [['perpage'], 'default', 'value' => 20],
             ['encache', 'default', 'value' => 0],
             [['pattern'], 'trim'],
             [['encache'], 'boolean'],
             [['type'], 'typeValidatior'],
-            [
-                'pattern', 'filter', 'filter' => function ($val) {
-                return Redisman::quoteValue($val);
-            }
-            ],
+
             ['pattern', 'string', 'min' => 1, 'max' => 300],
             ['perpage', 'integer', 'min' => 10, 'max' => 1000],
         ];
@@ -253,6 +249,7 @@ class RedisModel extends Model
      */
     protected function scriptBuilder($start, $end)
     {
+        $pattern=Redisman::quoteValue($this->pattern);
         $typecond = $this->typeCondBuilder();
         $scriptScan
             = <<<EOF
@@ -264,7 +261,7 @@ local count=0;
 local size=0
 local tp
 repeat
-    local result = redis.call("SCAN", cursor, "match", {$this->pattern}, "count", 50)
+    local result = redis.call("SCAN", cursor, "match", $pattern, "count", 50)
     cursor = result[1];
     keys = result[2];
     for i, key in ipairs(keys) do
@@ -306,7 +303,7 @@ local count=0;
 local size=0
 local tp
 
-    local result = redis.call("KEYS", {$this->pattern})
+    local result = redis.call("KEYS", $pattern)
     for i, key in ipairs(result) do
         tp=redis.call("TYPE", key)["ok"]
         if count>=$start and count<$end then
@@ -343,6 +340,7 @@ EOF;
      */
     protected function scriptBuilderGreedy()
     {
+        $pattern=Redisman::quoteValue($this->pattern);
         $typecond = $this->typeCondBuilder();
         $scriptScan
             = <<<EOF
@@ -354,7 +352,7 @@ local count=0;
 local size=0
 local tp
 repeat
-    local result = redis.call("SCAN", cursor, "match", {$this->pattern}, "count", 50)
+    local result = redis.call("SCAN", cursor, "match", $pattern, "count", 50)
     cursor = result[1];
     keys = result[2];
     for i, key in ipairs(keys) do
@@ -392,7 +390,7 @@ local all_keys = {};
 local count=0;
 local size=0
 local tp
-    local result = redis.call("KEYS", {$this->pattern})
+    local result = redis.call("KEYS", $pattern)
     for i, key in ipairs(result) do
         tp=redis.call("TYPE", key)["ok"]
            if $typecond then
