@@ -28,21 +28,21 @@ $this->title=$module->getCurrentName();
                         'quick' => function ($url, $model) {
                             return  Html::a(
                                 '<i class="icon circular large eye green"></i>',
-                                \yii\helpers\Url::to(['/redisman/default/quick', 'key' => urlencode($model['key'])]),
+                                \yii\helpers\Url::to(['/redisman/item/quick', 'key' => urlencode($model['key'])]),
                                 ['data-pjax' => 0, 'class'=>'modalink', 'title'=>Yii::t('app','Quick View')]
                             );
                         },
                         'view' => function ($url, $model) {
                             return  Html::a(
                                 '<i class="icon circular inverted eye green"></i>',
-                                \yii\helpers\Url::to(['view', 'key' => urlencode($model['key'])]),
+                                \yii\helpers\Url::to(['/redisman/item/view', 'key' => urlencode($model['key'])]),
                                 ['data-pjax' => 0, 'title'=>Yii::t('app','View')]
                             );
                         },
                         'delete' => function ($url, $model) {
                             return  Html::a(
                                 '<i class="icon circular small  trash red"></i>',
-                                    \yii\helpers\Url::to(['delete', 'key' => urlencode($model['key'])]),
+                                    \yii\helpers\Url::to(['/redisman/item/delete', 'key' => urlencode($model['key'])]),
                                     [
                                         'data-pjax' => 0,
                                         'data-confirm' => 'Подтвердите действие', 'data-method' => 'post'

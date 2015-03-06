@@ -16,7 +16,7 @@ use insolita\redisman\Redisman;
     <p>
         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/default/update']
+                'action' => ['/redisman/item/update']
             ]
         )?>
         <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
@@ -40,7 +40,7 @@ use insolita\redisman\Redisman;
                          'template'=>'{remove}',
                          'buttons'=>[
                              'remove'=>function($url,$data)use($model){
-                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/default/remfield', 'key'=>$model->key,'field'=>$data['field']]);
+                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/item/remfield', 'key'=>$model->key,'field'=>$data['field']]);
                              }
                          ]
                      ]
@@ -60,7 +60,7 @@ use insolita\redisman\Redisman;
     <p>
         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/default/update']
+                'action' => ['/redisman/item/update']
             ]
         )?>
         <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">

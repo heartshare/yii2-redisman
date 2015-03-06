@@ -1,7 +1,7 @@
 <p>
     <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
         [
-            'action' => ['/redisman/default/update']
+            'action' => ['/redisman/item/update']
         ]
     )?>
     <input type="hidden" name="key" value="<?=$model->key?>">

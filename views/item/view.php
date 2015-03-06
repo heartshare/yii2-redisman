@@ -20,7 +20,7 @@ foreach ($dblist as $db => $dbalias) {
             Html::a(
                 $dbalias, \yii\helpers\Url::to(
                     [
-                        '/redisman/default/move',
+                        '/redisman/item/move',
                         'key' => urlencode($model->key),
                         'db' => $db
                     ]
@@ -54,7 +54,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                             [
                                 'attribute' => 'ttl', 'format' => 'raw',
                                 'value' => $model->ttl .
-                                    '<br/><form action="' . \yii\helpers\Url::to(['/redisman/default/persist']) . '" method="post">
+                                    '<br/><form action="' . \yii\helpers\Url::to(['/redisman/item/persist']) . '" method="post">
                                     <div class="ui action mini input">
   <input placeholder="' . Redisman::t('redisman', 'Set TTl (-1 for persist)') . '" type="text" name="RedisItem[ttl]">
   <input type="hidden" name="RedisItem[key]" value="' . $model->key . '">
@@ -88,11 +88,11 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                     <?= $this->render('form_string', ['model' => $model]) ?>
                 <?php elseif($model->type == Redisman::REDIS_SET || $model->type == Redisman::REDIS_LIST):?>
                      <?=$this->render('form_list', ['model' => $model])?>
-                <?php elseif($model->type==Redisman::REDIS_HASH):?>
+                <?php elseif($model->type==Redisman::REDIS_HASH): ?>
                     <?=$this->render('form_hash', ['model' => $model])?>
-                <?php else:?>
+                <?php else: ?>
                     <?=$this->render('form_zset', ['model' => $model])?>
-                <?php endif ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>

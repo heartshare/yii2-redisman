@@ -24,7 +24,7 @@ $this->title = $module->getCurrentName();
                 <span><?= Redisman::t('redisman', 'Fields with * required') ?></span>
                 <?php $form = new \Zelenin\yii\SemanticUI\widgets\ActiveForm(
                     [
-                        'action' => ['/redisman/module/create']
+                        'action' => ['/redisman/item/create']
                     ]
                 )?>
                 <div class="one">

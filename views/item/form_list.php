@@ -17,7 +17,7 @@ use insolita\redisman\Redisman;
     <p>
         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/default/update']
+                'action' => ['/redisman/item/update']
             ]
         )?>
         <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
@@ -44,7 +44,7 @@ use insolita\redisman\Redisman;
     <p>
         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/default/update']
+                'action' => ['/redisman/item/update']
             ]
         )?>
         <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
