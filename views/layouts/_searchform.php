@@ -44,5 +44,7 @@ $model->restoreFilter();
 <div class="one right aligned">
 <?= Elements::button(
     '<i class="find icon"></i>' . Yii::t('app', 'Search'), ['class' => 'teal circular right ui aligned', 'type' => 'submit','tag'=>'button']
+) ?><?= \yii\helpers\Html::a(
+    '<i class="remove icon"></i>' . Yii::t('app', 'Clear'),['/redisman/default/reset-search'], ['class' => 'ui button blue circular left aligned']
 ) ?></div>
 <?php ActiveForm::end(); ?>

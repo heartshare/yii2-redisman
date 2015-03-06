@@ -226,6 +226,11 @@ class DefaultController extends \yii\web\Controller
         }
     }
 
+    public function actionResetSearch(){
+         RedisModel::resetFilter();
+         return $this->redirect(['show']);
+    }
+
     /**
      * @return \yii\web\Response
      */
