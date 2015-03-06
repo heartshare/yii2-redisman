@@ -25,8 +25,8 @@ $this->title = $module->getCurrentName();
                 'encoding',
                 [
                     'label' => Redisman::t('redisman', 'Value'), 'format' => 'raw'
-                    , 'value' => '<pre>'.(is_array($model->value) ? \yii\helpers\VarDumper::dumpAsString($model->value, 10, false)
-                    : $model->formatvalue).'</pre>'
+                    , 'value' => (is_array($model->value) ? Html::encode(\yii\helpers\VarDumper::dumpAsString($model->value, 10, false))
+                    : Html::encode($model->formatvalue))
                 ]
             ]
         ]

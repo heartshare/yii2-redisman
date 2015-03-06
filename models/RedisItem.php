@@ -12,6 +12,7 @@ use insolita\redisman\Redisman;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
@@ -366,7 +367,7 @@ class RedisItem extends Model
         if (!empty($arr) && count($arr) % 2 == 0) {
             $arr = array_chunk($arr, 2);
             foreach ($arr as $pair) {
-                $newarr[$pair[0]] = $pair[1];
+                $newarr[Html::encode($pair[0])] = Html::encode($pair[1]);
             }
         }
         unset($arr);
