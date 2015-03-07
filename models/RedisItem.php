@@ -8,12 +8,12 @@
 
 namespace insolita\redisman\models;
 
+use insolita\redisman\events\ModifyEvent;
 use insolita\redisman\Redisman;
 use yii\base\Model;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
-use yii\helpers\Json;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -23,7 +23,7 @@ use yii\web\NotFoundHttpException;
  */
 class RedisItem extends Model
 {
-    const EVENT_AFTER_CHANGE='onchange';
+    const EVENT_AFTER_CHANGE='afterchange';
     /**
      * @var string $key
      */
@@ -189,13 +189,21 @@ class RedisItem extends Model
     }
 
     public function update(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='update';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+
         switch($this->type){
         case Redisman::REDIS_STRING:
-            $this->addKey($this->type, $this->key, $this->formatvalue);
+            $event->command=Html::encode('SET '.$this->key.' '.$this->formatvalue);
+            Redisman::getInstance()->executeCommand('SET',[$this->key,$this->formatvalue]);
             break;
         case Redisman::REDIS_HASH:
             foreach($this->formatvalue as $field=>$val){
                 if(!empty($val)){
+                    $event->command.=Html::encode(' HSET '.$this->key.' '.$field.' '.$val);
                     Redisman::getInstance()->executeCommand('HSET',[$this->key, $field, $val]);
                 }
             }
@@ -203,31 +211,55 @@ class RedisItem extends Model
         case Redisman::REDIS_ZSET:
             foreach($this->formatvalue as $field=>$score){
                 if(is_numeric($score)){
+                    $event->command.=Html::encode(' ZADD '.$this->key.' '.$score.' '.$field);
                     Redisman::getInstance()->executeCommand('ZADD',[$this->key,$score,$field]);
                 }
             }
             break;
         case Redisman::REDIS_LIST:
+            $insvalue = explode("\r\n",$this->formatvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            array_unshift($insvalue, $this->key);
+            $event->command=Html::encode('DEL '.$this->key);
+            Redisman::getInstance()->executeCommand('DEL',[$this->key]);
+            $event->command.=Html::encode(' RPUSH '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('RPUSH', $insvalue);
+            break;
         case Redisman::REDIS_SET:
             $insvalue = explode("\r\n",$this->formatvalue);
             foreach($insvalue as &$fv){
                 $fv=trim($fv);
             }
+            array_unshift($insvalue, $this->key);
+            $event->command=Html::encode('DEL '.$this->key);
             Redisman::getInstance()->executeCommand('DEL',[$this->key]);
-            $this->addKey($this->type, $this->key, $insvalue);
+            $event->command.=Html::encode(' SADD '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('SADD', $insvalue);
             break;
 
         }
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+
     }
 
     public function append(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='append';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+
         switch($this->type){
         case Redisman::REDIS_STRING:
+            $event->command=Html::encode('SET '.$this->key.' '.$this->formatvalue);
             Redisman::getInstance()->executeCommand('APPEND',[$this->key, $this->appendvalue]);
             break;
         case Redisman::REDIS_HASH:
             foreach($this->appendvalue as $row){
                 if(!empty($row['field']) && !empty($row['value'])){
+                    $event->command.=Html::encode(' HSET '.$this->key.' '.$row['field'].' '.$row['value']);
                     Redisman::getInstance()->executeCommand('HSET',[$this->key, $row['field'], $row['value']]);
                 }
             }
@@ -235,29 +267,49 @@ class RedisItem extends Model
         case Redisman::REDIS_ZSET:
             foreach($this->appendvalue as $row){
                 if(!empty($row['field']) && !empty($row['score']) && is_numeric($row['score'])){
+                    $event->command.=Html::encode(' ZADD '.$this->key.' '.$row['score'].' '.$row['field']);
                     Redisman::getInstance()->executeCommand('ZADD',[$this->key, $row['score'], $row['field']]);
                 }
             }
             break;
         case Redisman::REDIS_LIST:
+            $insvalue = explode("\r\n",$this->appendvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            array_unshift($insvalue, $this->key);
+            $event->command=Html::encode('RPUSH '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('RPUSH', $insvalue);
+            break;
         case Redisman::REDIS_SET:
             $insvalue = explode("\r\n",$this->appendvalue);
             foreach($insvalue as &$fv){
                 $fv=trim($fv);
             }
-            $this->addKey($this->type, $this->key, $insvalue);
-            break;
-
+            array_unshift($insvalue, $this->key);
+            $event->command=Html::encode('SADD '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('SADD', $insvalue);
+             break;
         }
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 
     public function remfield(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='remfield';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
         switch($this->type) {
         case Redisman::REDIS_HASH:
+            $event->operation=Html::encode('HDEL '.$this->key.' '.$this->field);
             Redisman::getInstance()->executeCommand('HDEL',[$this->key, $this->field]);
+            $this->trigger(self::EVENT_AFTER_CHANGE,$event);
             break;
         case Redisman::REDIS_ZSET:
+            $event->operation=Html::encode('ZREM '.$this->key.' '.$this->field);
             Redisman::getInstance()->executeCommand('ZREM',[$this->key, $this->field]);
+            $this->trigger(self::EVENT_AFTER_CHANGE,$event);
             break;
         default:
         }
@@ -427,19 +479,43 @@ class RedisItem extends Model
     }
 
     public function persist(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+        $event->command=Html::encode('MOVE '.$this->key.' '.$this->db);
        if($this->ttl==-1){
+           $event->operation='persist';
+           $event->command=Html::encode('PERSIST '.$this->key);
            Redisman::getInstance()->executeCommand('PERSIST', [$this->key]);
        }else{
+           $event->operation='expire';
+           $event->command=Html::encode('EXPIRE '.$this->key.' '.$this->ttl);
            Redisman::getInstance()->executeCommand('EXPIRE', [$this->key, $this->ttl]);
        }
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 
     public function move(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='move';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+        $event->command=Html::encode('MOVE '.$this->key.' '.$this->db);
         Redisman::getInstance()->executeCommand('MOVE', [$this->key, $this->db]);
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 
     public function delete(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='delete';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+        $event->command=Html::encode('DEL '.$this->key);
         Redisman::getInstance()->executeCommand('DEL', [$this->key]);
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 
     /**
