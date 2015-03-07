@@ -59,7 +59,7 @@ return [
     'Search query updated' => 'Поисковый запрос изменен',
     'About' => 'О проекте',
     'Add' => 'Добавить',
-    'Clearind Database' => 'Очистить базу',
+    'Database is clear' => 'База очищена',
     'Connect' => 'Подключить',
     'Connection' => 'Redis-подключение',
     'Connection Settings' => 'Настройки подключения',
