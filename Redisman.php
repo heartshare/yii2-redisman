@@ -211,9 +211,14 @@ class Redisman extends Module
         return ucfirst($this->_conCurrent) . ' db#' . $this->_dbCurrent . ' [' . $this->_connect->hostname . ']';
     }
 
+
     /**
-     * @return \yii\redis\Connection
-     **/
+     * @param bool $force
+     * @param null $db
+     *
+     * @return object|\yii\redis\Connection
+     * @throws InvalidConfigException
+     */
     public function getConnection($force = false, $db = null)
     {
 
