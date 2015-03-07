@@ -57,7 +57,7 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
                                     '<br/><form action="' . \yii\helpers\Url::to(['/redisman/item/persist']) . '" method="post">
                                     <div class="ui action mini input">
   <input placeholder="' . Redisman::t('redisman', 'Set TTl (-1 for persist)') . '" type="text" name="RedisItem[ttl]">
-  <input type="hidden" name="RedisItem[key]" value="' . $model->key . '">
+  <input type="hidden" name="RedisItem[key]" value="' . urlencode($model->key) . '">
   <button class="ui blue icon button">
     <i class="save icon"></i>
   </button><input type="hidden" name="' . Yii::$app->getRequest()->csrfParam . '" value="' . Yii::$app->getRequest()
