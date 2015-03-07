@@ -55,6 +55,13 @@ Usage
                'defRedis'=>'local',
                'searchMethod'=>'SCAN',
                'greedySearch'=>false,
+               'on beforeFlushDB'=>function($event){
+                               if($event->data['db']==3){
+                                    $event->isValid=false;
+                               }else{
+                                   $event->isValid=true;
+                               }
+                           },
            ],
 
        ],
