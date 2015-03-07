@@ -146,6 +146,9 @@ class DefaultController extends \yii\web\Controller
     {
         if($this->module->dbFlush()){
             \Yii::$app->session->setFlash('success', Redisman::t('redisman', 'Clearind Database'));
+        }else{
+            \Yii::$app->session->setFlash('error',Redisman::t('redisman','Flushing this DB not allowed'), false);
+
         }
         return $this->redirect(['index']);
     }
