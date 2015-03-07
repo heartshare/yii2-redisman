@@ -347,7 +347,8 @@ class Redisman extends Module
     {
         $event=new ModelEvent();
         $event->data=['db'=>$this->getCurrentDb(),'connectionName'=>$this->getCurrentConn()];
-        if($this->trigger(self::BEFORE_FLUSHBD, $event)){
+        $this->trigger(self::BEFORE_FLUSHBD, $event);
+        if($event->isValid){
             $this->_connect->executeCommand('FLUSHDB');
             return true;
         }
