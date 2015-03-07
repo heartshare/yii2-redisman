@@ -9,6 +9,7 @@
 namespace insolita\redisman\components;
 
 
+use insolita\redisman\Redisman;
 use yii\base\Exception;
 use yii\redis\Connection;
 
@@ -29,6 +30,7 @@ class NativeConnection extends Connection{
      * @var array List of available redis commands https://github.com/phpredis/phpredis
      */
     public $redisCommands = [
+        'BGSAVE'=>'bgsave',
         'BRPOP'=>'brPop',
         'BRPOPLPUSH'=>'brpoplpush', // source destination timeout Pop a value from a list, push it to another list and return it; or block until one is available
         'CLIENT'=>'client', // ip:port Kill the connection of a client
@@ -205,6 +207,9 @@ class NativeConnection extends Connection{
     public function executeCommand($name, $params = [])
     {
         $this->open();
+        if(!isset($this->redisCommands[$name])){
+            throw new Exception(Redisman::t('redisman','Method '.$name.' not supported by '.get_class($this).' yet'));
+        }
         $name=$this->redisCommands[$name];
         return call_user_func_array(array($this->_socket,$name), $params);
     }

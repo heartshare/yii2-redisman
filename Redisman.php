@@ -12,6 +12,7 @@ namespace insolita\redisman;
 use insolita\redisman\components\NativeConnection;
 use yii\base\ErrorException;
 use yii\base\InvalidConfigException;
+use yii\base\ModelEvent;
 use yii\base\Module;
 
 /**
@@ -21,6 +22,8 @@ use yii\base\Module;
  */
 class Redisman extends Module
 {
+    const BEFORE_FLUSHBD='beforeFlushDB';
+
 
     const REDIS_STRING = 'string';
     const REDIS_LIST = 'list';
@@ -342,7 +345,11 @@ class Redisman extends Module
      */
     public function dbFlush()
     {
-        $this->_connect->executeCommand('FLUSHDB');
+        $event=new ModelEvent();
+        $event->data=['db'=>$this->getCurrentDb(),'connectionName'=>$this->getCurrentConn()];
+        if($this->trigger(self::BEFORE_FLUSHBD, $event)){
+            $this->_connect->executeCommand('FLUSHDB');
+        }
     }
 
     /**
