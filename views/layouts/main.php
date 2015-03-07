@@ -68,23 +68,23 @@ $this->beginPage();
                                 'items' => [
                                     [
                                         'label' => Redisman::keyTyper(Redisman::REDIS_STRING),
-                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_STRING]
+                                        'url' => ['/redisman/item/create', 'type' => Redisman::REDIS_STRING]
                                     ],
                                     [
                                         'label' => Redisman::keyTyper(Redisman::REDIS_LIST),
-                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_LIST]
+                                        'url' => ['/redisman/item/create', 'type' => Redisman::REDIS_LIST]
                                     ],
                                     [
                                         'label' => Redisman::keyTyper(Redisman::REDIS_HASH),
-                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_HASH]
+                                        'url' => ['/redisman/item/create', 'type' => Redisman::REDIS_HASH]
                                     ],
                                     [
                                         'label' => Redisman::keyTyper(Redisman::REDIS_SET),
-                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_SET]
+                                        'url' => ['/redisman/item/create', 'type' => Redisman::REDIS_SET]
                                     ],
                                     [
                                         'label' => Redisman::keyTyper(Redisman::REDIS_ZSET),
-                                        'url' => ['/redisman/default/add', 'type' => Redisman::REDIS_ZSET]
+                                        'url' => ['/redisman/item/create', 'type' => Redisman::REDIS_ZSET]
                                     ],
                                 ]
                             ],

@@ -13,6 +13,8 @@ use insolita\redisman\Redisman;
     <div class="item" data-tab="tabappend"><?=Redisman::t('redisman','Append')?></div>
 </div>
 <p><?=Redisman::t('redisman','Empty fields will not saved')?></p>
+<p><?=Redisman::t('redisman','Score must be numeric')?></p>
+
 
 <div class="ui bottom attached active tab segment"  data-tab="tabedit">
 
@@ -36,8 +38,11 @@ use insolita\redisman\Redisman;
                      [
                          'attribute'=>'score',
                          'format'=>'raw',
-                         'value'=>function($data)use($model){
-                             return '<input type="text" name="RedisItem[formatvalue]['.$data['field'].']" value="'.$data['score'].'">';
+                         'value'=>function($data, $key,$index)use($model){
+                             return  '<input type="hidden" name="RedisItem[formatvalue]['.$index.'][field]" value="'
+                             . $data['field'] . '">
+                                    <input type="text" name="RedisItem[formatvalue]['.$index.'][score]" value="'
+                             . $data['score'] . '">';
                          }
                      ],
                      [
@@ -45,8 +50,13 @@ use insolita\redisman\Redisman;
                          'template'=>'{remove}',
                          'buttons'=>[
                              'remove'=>function($url,$data)use($model){
-                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/item/remfield'],
-                                     ['title'=>Redisman::t('redisman','Remove field'), 'data-pjax'=>1,'data-method'=>'post','data-params'=>['key'=>urlencode($model->key),'field'=>$data['field']]]);
+                                 return \yii\helpers\Html::a(
+                                     '<i class="icon remove"></i>', [
+                                         '/redisman/item/remfield', 'RedisItem[key]' => urlencode($model->key),
+                                         'RedisItem[field]' => $data['field']
+                                     ],
+                                     ['title' => Redisman::t('redisman', 'Remove field'), 'data-pjax' => 1]
+                                 );
                              }
                          ]
                      ]
@@ -76,8 +86,8 @@ use insolita\redisman\Redisman;
          <thead><th><?=Redisman::t('redisman','field')?></th><th><?=Redisman::t('redisman','score')?></th></thead>
         <?php for($i=0; $i<=10;$i++):?>
             <tr>
-                <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][field]" value=""></td>
-                <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][score]" value=""></td>
+                <td><input type="text" name="RedisItem[formatvalue][<?=$i?>][field]" value=""></td>
+                <td><input type="text" name="RedisItem[formatvalue][<?=$i?>][score]" value=""></td>
             </tr>
         <?php endfor?>
         </table>

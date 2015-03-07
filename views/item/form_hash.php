@@ -40,9 +40,11 @@ use insolita\redisman\Redisman;
                         [
                             'attribute' => 'value',
                             'format' => 'raw',
-                            'value' => function ($data) use ($model) {
+                            'value' => function ($data,$key,$index) use ($model) {
                                 return
-                                    '<input type="text" name="RedisItem[formatvalue][' . $data['field'] . ']" value="'
+                                    '<input type="hidden" name="RedisItem[formatvalue]['.$index.'][field]" value="'
+                                    . $data['field'] . '">
+                                    <input type="text" name="RedisItem[formatvalue]['.$index.'][value]" value="'
                                     . $data['value'] . '">';
                             }
                         ],
@@ -97,8 +99,8 @@ use insolita\redisman\Redisman;
                 </thead>
                 <?php for ($i = 0; $i <= 10; $i++): ?>
                     <tr>
-                        <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][field]" value=""></td>
-                        <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][value]" value=""></td>
+                        <td><input type="text" name="RedisItem[formatvalue][<?=$i?>][field]" value=""></td>
+                        <td><input type="text" name="RedisItem[formatvalue][<?=$i?>][value]" value=""></td>
                     </tr>
                 <?php endfor ?>
             </table>

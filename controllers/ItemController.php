@@ -14,8 +14,8 @@ use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use yii\helpers\VarDumper;
-use yii\web\Controller;
+ use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 
 class ItemController extends Controller{
     /**
@@ -53,14 +53,31 @@ class ItemController extends Controller{
         ];
     }
 
-    /**
-     * @param $type
-     *
-     * @return string
-     */
+
     public function actionCreate($type)
     {
-        return $this->render('create');
+        if(!in_array($type,array_keys(Redisman::$types))){
+            throw new NotFoundHttpException(Redisman::t('redisman','Unsupported type'));
+        }
+        $model=new RedisItem();
+        $model->type=$type;
+        $model->scenario='create';
+        $lastlog=\Yii::$app->session->get('RedisManager_createlog','');
+        $lastlog=explode('[~lastlog~]',$lastlog);
+        if(\Yii::$app->request->isPost){
+            if($model->load(\Yii::$app->request->post()) && $model->validate()){
+                $model->on(RedisItem::EVENT_AFTER_CHANGE,function($event)use($lastlog){
+                        array_unshift($lastlog,$event->command);
+                        \Yii::$app->session->set('RedisManager_createlog',implode('[~lastlog~]',$lastlog));
+                    });
+                $model->create();
+                \Yii::$app->session->setFlash('success',Redisman::t('redisman','Key created!'));
+            }else{
+                \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+            }
+            return $this->redirect(['create','type'=>$type]);
+        }
+        return $this->render('create',compact('model','lastlog'));
 
     }
 
@@ -91,6 +108,8 @@ class ItemController extends Controller{
         $model->scenario='append';
         if($model->load(\Yii::$app->request->post()) && $model->validate()){
             $model->append();
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
         }
 
         return $this->redirect(['view','key'=>$key]);
@@ -130,7 +149,9 @@ class ItemController extends Controller{
             $model->remfield();
         }
         $model->findValue();
-        return $this->renderAjax('form_'.$model->type, compact('model'));
+        return ($model->type)?
+             $this->renderAjax('form_'.$model->type, compact('model'))
+             :$this->redirect(['view','key'=>urldecode($model->key)]);
     }
 
     /**

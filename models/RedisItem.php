@@ -8,6 +8,7 @@
 
 namespace insolita\redisman\models;
 
+use insolita\redisman\components\NativeConnection;
 use insolita\redisman\events\ModifyEvent;
 use insolita\redisman\Redisman;
 use yii\base\Model;
@@ -76,14 +77,6 @@ class RedisItem extends Model
     public $formatvalue;
 
     /**
-     * @var array|string  $appendvalue
-     */
-    public $appendvalue;
-    /**
-     * @var int $appendpos
-     */
-    public $appendpos;
-    /**
      * @var array $oldAttributes
      */
     private $oldAttributes= [];
@@ -99,10 +92,11 @@ class RedisItem extends Model
             ['key','required'],
             [['db'],'required','on'=>'move'],
             [['ttl'],'required','on'=>'persist'],
+            [['ttl'], 'default', 'value' => -1,'on'=>'create'],
             [['formatvalue'],'required','on'=>['create','update','append']],
 
             ['key','string'],
-            ['key','keyExists'],
+            ['key','keyExists','except'=>'create'],
 
             ['field','required','on'=>'remfield'],
             ['field','string'],
@@ -113,16 +107,13 @@ class RedisItem extends Model
             ['type','required'],
             [['type'], 'in','range'=>array_keys(Redisman::$types)],
 
-            [['formatvalue'], 'string','on'=>'update, create', 'when'=>function($model){
+            [['formatvalue'], 'string','on'=>'update, append, create', 'when'=>function($model){
                 return in_array($model->type,[Redisman::REDIS_STRING,Redisman::REDIS_SET,Redisman::REDIS_LIST]);
             }],
-            [['formatvalue'], 'isarrayValidator','on'=>'update, create', 'when'=>function($model){return ($model->type==Redisman::REDIS_HASH||$model->type==Redisman::REDIS_ZSET);}],
+            [['formatvalue'], 'isarrayValidator','on'=>'update, append, create', 'when'=>function($model){return ($model->type==Redisman::REDIS_HASH||$model->type==Redisman::REDIS_ZSET);}],
 
-            [['appendvalue'], 'string','on'=>'append', 'when'=>function($model){
-                return in_array($model->type,[Redisman::REDIS_STRING,Redisman::REDIS_SET,Redisman::REDIS_LIST]);
-            }],
-            [['appendvalue'], 'isarrayValidator','on'=>'append', 'when'=>function($model){return ($model->type==Redisman::REDIS_HASH||$model->type==Redisman::REDIS_ZSET);}],
-            [['ttl'], 'integer', 'min' => -1]
+            [['ttl'], 'integer', 'min' => -1],
+
         ];
     }
 
@@ -135,11 +126,11 @@ class RedisItem extends Model
         return [
             'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
             'update' => ['key','formatvalue'],
-            'append' => ['key','appendvalue'],
+            'append' => ['key','formatvalue'],
             'persist' => ['key','ttl'],
             'move' => ['key','db'],
              'delete'=>['key'],
-            'create' => ['key', 'formatvalue', 'ttl'],
+            'create' => ['key', 'formatvalue', 'ttl','type'],
             'remfield'=>['key','field']
         ];
     }
@@ -194,103 +185,31 @@ class RedisItem extends Model
         $event->operation='update';
         $event->connection=Redisman::getInstance()->getCurrentConn();
         $event->db=Redisman::getInstance()->getCurrentDb();
-
-        switch($this->type){
-        case Redisman::REDIS_STRING:
-            $event->command=Html::encode('SET '.$this->key.' '.$this->formatvalue);
-            Redisman::getInstance()->executeCommand('SET',[$this->key,$this->formatvalue]);
-            break;
-        case Redisman::REDIS_HASH:
-            foreach($this->formatvalue as $field=>$val){
-                if(!empty($val)){
-                    $event->command.=Html::encode(' HSET '.$this->key.' '.$field.' '.$val);
-                    Redisman::getInstance()->executeCommand('HSET',[$this->key, $field, $val]);
-                }
-            }
-            break;
-        case Redisman::REDIS_ZSET:
-            foreach($this->formatvalue as $field=>$score){
-                if(is_numeric($score)){
-                    $event->command.=Html::encode(' ZADD '.$this->key.' '.$score.' '.$field);
-                    Redisman::getInstance()->executeCommand('ZADD',[$this->key,$score,$field]);
-                }
-            }
-            break;
-        case Redisman::REDIS_LIST:
-            $insvalue = explode("\r\n",$this->formatvalue);
-            foreach($insvalue as &$fv){
-                $fv=trim($fv);
-            }
-            array_unshift($insvalue, $this->key);
+        if($this->type==Redisman::REDIS_LIST || $this->type==Redisman::REDIS_SET){
             $event->command=Html::encode('DEL '.$this->key);
-            Redisman::getInstance()->executeCommand('DEL',[$this->key]);
-            $event->command.=Html::encode(' RPUSH '.$this->key.' '.implode(' ',$insvalue));
-            Redisman::getInstance()->executeCommand('RPUSH', $insvalue);
-            break;
-        case Redisman::REDIS_SET:
-            $insvalue = explode("\r\n",$this->formatvalue);
-            foreach($insvalue as &$fv){
-                $fv=trim($fv);
-            }
-            array_unshift($insvalue, $this->key);
-            $event->command=Html::encode('DEL '.$this->key);
-            Redisman::getInstance()->executeCommand('DEL',[$this->key]);
-            $event->command.=Html::encode(' SADD '.$this->key.' '.implode(' ',$insvalue));
-            Redisman::getInstance()->executeCommand('SADD', $insvalue);
-            break;
-
+        }
+        $event->command.=$this->save();
+        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+    }
+    public function create(){
+        $event=new ModifyEvent();
+        $event->key=$this->key;
+        $event->operation='create';
+        $event->connection=Redisman::getInstance()->getCurrentConn();
+        $event->db=Redisman::getInstance()->getCurrentDb();
+        $event->command=$this->save();
+        if($this->ttl>-1){
+            $this->persist();
         }
         $this->trigger(self::EVENT_AFTER_CHANGE, $event);
-
     }
-
     public function append(){
         $event=new ModifyEvent();
         $event->key=$this->key;
         $event->operation='append';
         $event->connection=Redisman::getInstance()->getCurrentConn();
         $event->db=Redisman::getInstance()->getCurrentDb();
-
-        switch($this->type){
-        case Redisman::REDIS_STRING:
-            $event->command=Html::encode('SET '.$this->key.' '.$this->formatvalue);
-            Redisman::getInstance()->executeCommand('APPEND',[$this->key, $this->appendvalue]);
-            break;
-        case Redisman::REDIS_HASH:
-            foreach($this->appendvalue as $row){
-                if(!empty($row['field']) && !empty($row['value'])){
-                    $event->command.=Html::encode(' HSET '.$this->key.' '.$row['field'].' '.$row['value']);
-                    Redisman::getInstance()->executeCommand('HSET',[$this->key, $row['field'], $row['value']]);
-                }
-            }
-            break;
-        case Redisman::REDIS_ZSET:
-            foreach($this->appendvalue as $row){
-                if(!empty($row['field']) && !empty($row['score']) && is_numeric($row['score'])){
-                    $event->command.=Html::encode(' ZADD '.$this->key.' '.$row['score'].' '.$row['field']);
-                    Redisman::getInstance()->executeCommand('ZADD',[$this->key, $row['score'], $row['field']]);
-                }
-            }
-            break;
-        case Redisman::REDIS_LIST:
-            $insvalue = explode("\r\n",$this->appendvalue);
-            foreach($insvalue as &$fv){
-                $fv=trim($fv);
-            }
-            array_unshift($insvalue, $this->key);
-            $event->command=Html::encode('RPUSH '.$this->key.' '.implode(' ',$insvalue));
-            Redisman::getInstance()->executeCommand('RPUSH', $insvalue);
-            break;
-        case Redisman::REDIS_SET:
-            $insvalue = explode("\r\n",$this->appendvalue);
-            foreach($insvalue as &$fv){
-                $fv=trim($fv);
-            }
-            array_unshift($insvalue, $this->key);
-            $event->command=Html::encode('SADD '.$this->key.' '.implode(' ',$insvalue));
-            Redisman::getInstance()->executeCommand('SADD', $insvalue);
-             break;
-        }
+        $event->command=$this->save();
         $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 
@@ -374,7 +293,9 @@ class RedisItem extends Model
             break;
         case Redisman::REDIS_HASH:
         case Redisman::REDIS_ZSET:
-                $this->value = $this->arrayAssociative($this->value);
+               if(!Redisman::getInstance()->getConnection() instanceof NativeConnection){
+                   $this->value = $this->arrayAssociative($this->value);
+               }
                 $this->formatvalue =$this->valueDataProvider();
             break;
         case Redisman::REDIS_LIST:
@@ -449,33 +370,52 @@ class RedisItem extends Model
             ]);
     }
 
-    /**
-     * Add any redis key function
-     *
-     * @param int    $type
-     * @param string $key
-     * @param (string|array) $value
-     *
-     * @return boolean
-     */
-    public function addKey($type, $key, $value)
+
+    public function save()
     {
-        if ($type == Redisman::REDIS_STRING) {
-            return Redisman::getInstance()->executeCommand('SET',[$key, $value]);
-        } elseif (is_array($value)) {
-            array_unshift($value, $key);
-            switch($type){
-            case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('RPUSH', $value);break;
-            case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HMSET', $value);break;
-            case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('SADD', $value);break;
-            case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZADD', $value);break;
-            default:return false;
+        $command='';
+        switch($this->type){
+        case Redisman::REDIS_STRING:
+            $command=Html::encode('SET '.$this->key.' '.$this->formatvalue);
+            Redisman::getInstance()->executeCommand('SET',[$this->key, $this->formatvalue]);
+            break;
+        case Redisman::REDIS_HASH:
+                 foreach($this->formatvalue as $row){
+                    if(!empty($row['field']) && !empty($row['value'])){
+                        $command.=Html::encode(' HSET '.$this->key.' '.$row['field'].' '.$row['value']);
+                        Redisman::getInstance()->executeCommand('HSET',[$this->key, $row['field'], $row['value']]);
+                    }
+                }
+
+            break;
+        case Redisman::REDIS_ZSET:
+            foreach($this->formatvalue as $row){
+                if(!empty($row['field']) && !empty($row['score']) && is_numeric($row['score'])){
+                    $command.=Html::encode(' ZADD '.$this->key.' '.$row['score'].' '.$row['field']);
+                    Redisman::getInstance()->executeCommand('ZADD',[$this->key, $row['score'], $row['field']]);
+                }
             }
-
-        } else {
-            return false;
+            break;
+        case Redisman::REDIS_LIST:
+            $insvalue = explode("\r\n",$this->formatvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            array_unshift($insvalue, $this->key);
+            $command=Html::encode('RPUSH '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('RPUSH', $insvalue);
+            break;
+        case Redisman::REDIS_SET:
+            $insvalue = explode("\r\n",$this->formatvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            array_unshift($insvalue, $this->key);
+            $command=Html::encode('SADD '.$this->key.' '.implode(' ',$insvalue));
+            Redisman::getInstance()->executeCommand('SADD', $insvalue);
+            break;
         }
-
+         return $command;
     }
 
     public function persist(){
@@ -483,7 +423,6 @@ class RedisItem extends Model
         $event->key=$this->key;
         $event->connection=Redisman::getInstance()->getCurrentConn();
         $event->db=Redisman::getInstance()->getCurrentDb();
-        $event->command=Html::encode('MOVE '.$this->key.' '.$this->db);
        if($this->ttl==-1){
            $event->operation='persist';
            $event->command=Html::encode('PERSIST '.$this->key);

@@ -52,7 +52,8 @@ use insolita\redisman\Redisman;
 
     <div class="one">
         <?php
-        echo $form->field($model, 'appendvalue')->widget(
+        $model->formatvalue='';
+        echo $form->field($model, 'formatvalue')->widget(
             \lav45\aceEditor\AceEditorWidget::className(), [
                 'mode' => 'text',
                 'fontSize' => 15,

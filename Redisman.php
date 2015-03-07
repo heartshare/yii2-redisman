@@ -9,6 +9,7 @@
 namespace insolita\redisman;
 
 
+use insolita\redisman\components\NativeConnection;
 use yii\base\ErrorException;
 use yii\base\InvalidConfigException;
 use yii\base\Module;
@@ -206,7 +207,7 @@ class Redisman extends Module
                 $this->_conCurrent = $this->defRedis;
             }
             $this->_connect = \Yii::createObject($this->connections[$this->_conCurrent]);
-            $this->_dbCount = $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])[1];
+            $this->_dbCount = $this->configGetDatabases();
             if (!is_null($db) && $db <= $this->_dbCount && $db != $this->_connect->database) {
                 $this->_connect->select($db);
                 $this->_dbCurrent = $db;
@@ -264,18 +265,34 @@ class Redisman extends Module
      **/
     public function dbInfo()
     {
-        $info = $this->_connect->executeCommand('INFO', ['all']);
-        $info = explode("\r\n", $info);
         $infoex = [];
         $section = 'Undefined';
-        foreach ($info as $line) {
-            if (strpos($line, '#') !== false) {
-                $section = trim(str_replace('#', '', $line));
-            } elseif (strpos($line, ':') !== false) {
-                list($key, $val) = explode(':', $line);
-                $infoex[$section][trim($key)] = trim($val);
+
+        if($this->_connect instanceof NativeConnection){
+            $sects=['server','clients','memory','persistence','stats','cpu','commandstats','clusters','keyspace'];
+            foreach($sects as $sect){
+                $info = $this->_connect->executeCommand('INFO', [strtoupper($sect)]);
+                foreach ($info as $k=>$v) {
+                    $infoex[$sect][$k] = trim($v);
+                }
+            }
+
+
+        }else{
+            $info = $this->_connect->executeCommand('INFO', ['all']);
+            $info = explode("\r\n", $info);
+            foreach ($info as $line) {
+                if (strpos($line, '#') !== false) {
+                    $section = trim(str_replace('#', '', $line));
+                } elseif (strpos($line, ':') !== false) {
+                    list($key, $val) = explode(':', $line);
+                    $infoex[$section][trim($key)] = trim($val);
+                }
             }
         }
+
+
+
         return $infoex;
     }
 
@@ -291,7 +308,18 @@ class Redisman extends Module
     }
 
     public function executeCommand($command, $params=[]){
+        if($command=='EVAL' && $this->_connect instanceof NativeConnection){
+            return $this->_connect->evaluate($params[0],[],0);
+        }
         return $this->_connect->executeCommand($command, $params);
+    }
+
+    public function configGetDatabases(){
+        if($this->_connect instanceof NativeConnection){
+            return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])['databases'];
+        }else{
+            return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])[1];
+        }
     }
 
     /**
@@ -307,8 +335,12 @@ class Redisman extends Module
             } else {
                 foreach ($this->connectionList() as $item) {
                     $cn = \Yii::createObject($this->connections[$item]);
-                    $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];
-                    $cn->close();
+                    if($cn instanceof NativeConnection){
+                        $this->_totalDbCount[$item] =  $cn->executeCommand('CONFIG', ['GET', 'databases']);
+                    }else{
+                        $this->_totalDbCount[$item] =  $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];
+                    }
+                     $cn->close();
                 }
                 \Yii::$app->session->set('RedisManager_totalDbItem', $this->_totalDbCount);
             }
