@@ -1,6 +1,6 @@
-Управление Базой Redis
+RedisManager Module
 ======================
-Управление базой redis
+Manage Redis Databases (beta)
 
 Installation
 ------------
@@ -25,7 +25,4 @@ to the require section of your `composer.json` file.
 Usage
 -----
 
-Once the extension is installed, simply use it in your code by  :
-
-```php
-<?= \insolita\redisman\AutoloadExample::widget(); ?>```
+coming soon
