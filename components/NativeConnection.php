@@ -12,6 +12,12 @@ namespace insolita\redisman\components;
 use yii\base\Exception;
 use yii\redis\Connection;
 
+/**
+ * Class NativeConnection  via phpredis php-extension
+ * Early beta not recommended for use in production
+ *
+ * @package insolita\redisman\components
+ */
 class NativeConnection extends Connection{
 
     /**
@@ -189,6 +195,13 @@ class NativeConnection extends Connection{
 
     }
 
+    /**
+     * @param string $name
+     * @param array  $params
+     *
+     * @return mixed
+     * @throws Exception
+     */
     public function executeCommand($name, $params = [])
     {
         $this->open();
@@ -196,6 +209,11 @@ class NativeConnection extends Connection{
         return call_user_func_array(array($this->_socket,$name), $params);
     }
 
+    /**
+     * @param string $name
+     * @param array  $arguments
+     * @return array|string|int|bool
+     */
     public function __call($name, $arguments)
     {
             try{
@@ -206,6 +224,11 @@ class NativeConnection extends Connection{
             }
     }
 
+    /**
+     * @param $e
+     * @param $name
+     * @param $args
+     */
     private function handle_exception($e,$name,$args)
     {
         $err=$e->getMessage();
@@ -213,6 +236,9 @@ class NativeConnection extends Connection{
         \Yii::error($msg);
     }
 
+    /**
+     *
+     */
     public function close(){
         if($this->_socket){
             $this->_socket->close();

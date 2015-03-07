@@ -70,12 +70,12 @@ class Redisman extends Module
     /**
      * @var string $searchMethod - May be SCAN or KEYS(not recommended for large Database)
      **/
-    public $searchMethod='SCAN';
+    public $searchMethod = 'SCAN';
 
     /**
      * @var boolean $greedySearch - if true - all search results will be loaded, else - only for current page (but still  all keys will be scanned for correct pagination)
      **/
-    public $greedySearch=false;
+    public $greedySearch = false;
 
     /**
      * @var \yii\redis\Connection $_connect current redis connection
@@ -121,6 +121,19 @@ class Redisman extends Module
         );
 
     /**
+     * @var array
+     */
+    public static $convtypes
+        = array(
+            0 => 'none',
+            1 => 'string',
+            2 => 'set',
+            3 => 'list',
+            4 => 'zset',
+            5 => 'hash'
+        );
+
+    /**
      * @throws InvalidConfigException
      */
     public function init()
@@ -131,12 +144,14 @@ class Redisman extends Module
 
         if (empty($this->connections)) {
             throw new InvalidConfigException(
-                self::t('redisman','Wrong module configuration! Please set array of available redis connections')
+                self::t('redisman', 'Wrong module configuration! Please set array of available redis connections')
             );
         }
 
         if (empty($this->defRedis) or !in_array($this->defRedis, $this->connectionList())) {
-            throw new InvalidConfigException(self::t('redisman','Wrong module configuration! Wrong configuration defRedis param'));
+            throw new InvalidConfigException(
+                self::t('redisman', 'Wrong module configuration! Wrong configuration defRedis param')
+            );
         }
         $this->restoreFromSession();
         $this->getConnection(false, $this->_dbCurrent);
@@ -209,7 +224,8 @@ class Redisman extends Module
             $this->_connect = \Yii::createObject($this->connections[$this->_conCurrent]);
             $this->_dbCount = $this->configGetDatabases();
             if (!is_null($db) && $db <= $this->_dbCount && $db != $this->_connect->database) {
-                $this->_connect->select($db);
+                $this->executeCommand('SELECT', [$db]);
+                //$this->_connect->select($db);
                 $this->_dbCurrent = $db;
             } else {
                 $this->_dbCurrent = $this->_connect->database;
@@ -230,7 +246,7 @@ class Redisman extends Module
     public function setConnection($name, $db = null)
     {
         if (!isset($this->connections[$name])) {
-            throw new ErrorException(self::t('redisman','Wrong redis connection name'));
+            throw new ErrorException(self::t('redisman', 'Wrong redis connection name'));
         } else {
             $this->_conCurrent = $name;
             $this->_connect = $this->getConnection(true, $db);
@@ -268,17 +284,19 @@ class Redisman extends Module
         $infoex = [];
         $section = 'Undefined';
 
-        if($this->_connect instanceof NativeConnection){
-            $sects=['server','clients','memory','persistence','stats','cpu','commandstats','clusters','keyspace'];
-            foreach($sects as $sect){
+        if ($this->_connect instanceof NativeConnection) {
+            $sects = [
+                'server', 'clients', 'memory', 'persistence', 'stats', 'cpu', 'commandstats', 'clusters', 'keyspace'
+            ];
+            foreach ($sects as $sect) {
                 $info = $this->_connect->executeCommand('INFO', [strtoupper($sect)]);
-                foreach ($info as $k=>$v) {
+                foreach ($info as $k => $v) {
                     $infoex[$sect][$k] = trim($v);
                 }
             }
 
 
-        }else{
+        } else {
             $info = $this->_connect->executeCommand('INFO', ['all']);
             $info = explode("\r\n", $info);
             foreach ($info as $line) {
@@ -292,32 +310,58 @@ class Redisman extends Module
         }
 
 
-
         return $infoex;
     }
 
-    public function type($key){
-        return $this->_connect->executeCommand('TYPE', [$key]);
+    /**
+     * @param $key
+     *
+     * @return string
+     */
+    public function type($key)
+    {
+        $type = $this->_connect->executeCommand('TYPE', [$key]);
+        return is_string($type) ? $type : self::$convtypes[$type];
     }
-    public function dbSave(){
+
+    /**
+     *
+     */
+    public function dbSave()
+    {
         $this->_connect->executeCommand('BGSAVE');
     }
 
-    public function dbFlush(){
+    /**
+     *
+     */
+    public function dbFlush()
+    {
         $this->_connect->executeCommand('FLUSHDB');
     }
 
-    public function executeCommand($command, $params=[]){
-        if($command=='EVAL' && $this->_connect instanceof NativeConnection){
-            return $this->_connect->evaluate($params[0],[],0);
+    /**
+     * @param       $command
+     * @param array $params
+     *
+     * @return array|bool|null|string
+     */
+    public function executeCommand($command, $params = [])
+    {
+        if ($command == 'EVAL' && $this->_connect instanceof NativeConnection) {
+            return $this->_connect->evaluate($params[0], [], 0);
         }
         return $this->_connect->executeCommand($command, $params);
     }
 
-    public function configGetDatabases(){
-        if($this->_connect instanceof NativeConnection){
+    /**
+     * @return mixed
+     */
+    public function configGetDatabases()
+    {
+        if ($this->_connect instanceof NativeConnection) {
             return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])['databases'];
-        }else{
+        } else {
             return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])[1];
         }
     }
@@ -335,12 +379,12 @@ class Redisman extends Module
             } else {
                 foreach ($this->connectionList() as $item) {
                     $cn = \Yii::createObject($this->connections[$item]);
-                    if($cn instanceof NativeConnection){
-                        $this->_totalDbCount[$item] =  $cn->executeCommand('CONFIG', ['GET', 'databases']);
-                    }else{
-                        $this->_totalDbCount[$item] =  $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];
+                    if ($cn instanceof NativeConnection) {
+                        $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases']);
+                    } else {
+                        $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];
                     }
-                     $cn->close();
+                    $cn->close();
                 }
                 \Yii::$app->session->set('RedisManager_totalDbItem', $this->_totalDbCount);
             }
@@ -373,7 +417,7 @@ class Redisman extends Module
     public static function keyTyper($type)
     {
         if (isset(self::$types[$type])) {
-            return self::t('redisman',self::$types[$type]);
+            return self::t('redisman', self::$types[$type]);
         } else {
             return 'undefined';
         }
@@ -391,7 +435,6 @@ class Redisman extends Module
     }
 
 
-
     /**
      * @param       $message
      * @param array $params
@@ -399,48 +442,45 @@ class Redisman extends Module
      *
      * @return string
      */
-    public static function t($category,$message, $params = [], $language = null)
+    public static function t($category, $message, $params = [], $language = null)
     {
         //return \Yii::t('redisman', $message, $params, $language);
-        return \Yii::t('insolita/redisman/'.$category, $message, $params, $language);
+        return \Yii::t('insolita/redisman/' . $category, $message, $params, $language);
     }
 
-    public static  function quoteValue($str)
+    /**
+     * @param $str
+     *
+     * @return string
+     */
+    public static function quoteValue($str)
     {
         if (!is_string($str) && !is_int($str)) {
             return $str;
         }
-        $str=addcslashes($str, "\000\n\r\032");
-        $squotes=substr_count($str, "'");
-        $mquotes=substr_count($str, '"');
-        $dslashes=substr_count($str, '\\\\');
-        $sslahes=substr_count($str, '\\');
-        if($sslahes/2 !==$dslashes){
-            $str=str_replace('\\\\','{~dslash~}',$str);
-            $str=str_replace('\\','\\\\',$str);
-            $str=str_replace('{~dslash~}','\\\\\\\\',$str);
+        $str = addcslashes($str, "\000\n\r\032");
+        $squotes = substr_count($str, "'");
+        $mquotes = substr_count($str, '"');
+        $dslashes = substr_count($str, '\\\\');
+        $sslahes = substr_count($str, '\\');
+        if ($sslahes / 2 !== $dslashes) {
+            $str = str_replace('\\\\', '{~dslash~}', $str);
+            $str = str_replace('\\', '\\\\', $str);
+            $str = str_replace('{~dslash~}', '\\\\\\\\', $str);
         }
 
-        if($mquotes && !$squotes){
-            return ($mquotes%2==0)?"'".$str."'":"'".str_replace('"','\"', $str)."'";
-        }elseif(!$mquotes && $squotes){
-            return ($squotes%2==0)?'"'.$str.'"':'"'.str_replace("'","\'", $str).'"';
-        }elseif(!$squotes && !$mquotes){
-            return "'".$str."'";
-        }else{
-            $str=str_replace('"','\"', $str);
-            $str=str_replace("'","\'", $str);
-            return "'".$str."'";
+        if ($mquotes && !$squotes) {
+            return ($mquotes % 2 == 0) ? "'" . $str . "'" : "'" . str_replace('"', '\"', $str) . "'";
+        } elseif (!$mquotes && $squotes) {
+            return ($squotes % 2 == 0) ? '"' . $str . '"' : '"' . str_replace("'", "\'", $str) . '"';
+        } elseif (!$squotes && !$mquotes) {
+            return "'" . $str . "'";
+        } else {
+            $str = str_replace('"', '\"', $str);
+            $str = str_replace("'", "\'", $str);
+            return "'" . $str . "'";
         }
 
-    /*    if(strpos($str,'"')!==false && strpos($str,"'")===false){
-            return "'" . addcslashes(str_replace('"','\"', $str), "\000\n\r\032") . "'";
-        }elseif(strpos($str,'"')===false && strpos($str,"'")!==false){
-            return '"' . addcslashes(str_replace("'", "\'", $str), "\000\n\r\032") .'"';
-        }elseif(strpos($str,'"')===false && strpos($str,"'")===false){
-            return "'" . addcslashes($str, "\000\n\r\\\032") . "'";
-        }
-*/
     }
 
 } 

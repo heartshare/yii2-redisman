@@ -31,6 +31,7 @@ $this->title = $module->getCurrentName();
                 );?>
                 <div class="one">
                     <?php echo $form->field($model, 'key')->textInput([]); ?>
+                    <br/>
                 </div>
                 <div class="one">
                     <?php

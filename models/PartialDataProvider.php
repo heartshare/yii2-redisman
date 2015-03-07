@@ -12,7 +12,13 @@ namespace insolita\redisman\models;
 use yii\data\BaseDataProvider;
 use yii\helpers\ArrayHelper;
 
-class PartialDataProvider extends BaseDataProvider{
+/**
+ * Class PartialDataProvider
+ *
+ * @package insolita\redisman\models
+ */
+class PartialDataProvider extends BaseDataProvider
+{
     /**
      * @var string|callable the column that is used as the key of the data models.
      * This can be either a column name, or a callable that returns the key value of a given data model.
@@ -28,6 +34,9 @@ class PartialDataProvider extends BaseDataProvider{
      */
     public $allModels;
 
+    /**
+     * @var
+     */
     public $totalCount;
 
 
@@ -54,6 +63,7 @@ class PartialDataProvider extends BaseDataProvider{
 
     /**
      * Remove model slicing
+     *
      * @inheritdoc
      */
     protected function prepareKeys($models)
@@ -84,17 +94,20 @@ class PartialDataProvider extends BaseDataProvider{
 
     /**
      * Sorts the data models according to the given sort definition
+     *
      * @param array $models the models to be sorted
-     * @param Sort $sort the sort definition
+     * @param \yii\data\Sort  $sort   the sort definition
+     *
      * @return array the sorted data models
      */
     protected function sortModels($models, $sort)
     {
-        $orders = $sort->getOrders();
+         $orders = $sort->getOrders();
         if (!empty($orders)) {
             ArrayHelper::multisort($models, array_keys($orders), array_values($orders));
         }
 
         return $models;
     }
-} 
+
+}

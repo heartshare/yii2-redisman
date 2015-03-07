@@ -67,10 +67,9 @@ class DefaultController extends \yii\web\Controller
         $model = new RedisModel();
         $model->restoreFilter();
         $dataProvider = $model->search(\Yii::$app->request->getQueryParams());
-        Url::remember(\Yii::$app->request->getUrl(),'show');
+        Url::remember(\Yii::$app->request->getUrl(), 'show');
         return $this->render('show', ['model' => $model, 'dataProvider' => $dataProvider]);
     }
-
 
 
     /**
@@ -118,9 +117,10 @@ class DefaultController extends \yii\web\Controller
         }
     }
 
-    public function actionResetSearch(){
-         RedisModel::resetFilter();
-         return $this->redirect(['show']);
+    public function actionResetSearch()
+    {
+        RedisModel::resetFilter();
+        return $this->redirect(['show']);
     }
 
     /**
@@ -144,7 +144,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionFlushdb()
     {
-         $this->module->dbFlush();
+        $this->module->dbFlush();
         if (\Yii::$app->request->isAjax) {
             echo 'ok';
         } else {

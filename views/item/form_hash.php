@@ -43,9 +43,9 @@ use insolita\redisman\Redisman;
                             'value' => function ($data,$key,$index) use ($model) {
                                 return
                                     '<input type="hidden" name="RedisItem[formatvalue]['.$index.'][field]" value="'
-                                    . $data['field'] . '">
+                                    .\yii\helpers\Html::encode( $data['field']) . '">
                                     <input type="text" name="RedisItem[formatvalue]['.$index.'][value]" value="'
-                                    . $data['value'] . '">';
+                                    . \yii\helpers\Html::encode( $data['value']) . '">';
                             }
                         ],
                         [

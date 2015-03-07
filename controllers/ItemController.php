@@ -14,10 +14,11 @@ use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
- use yii\web\Controller;
+use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
-class ItemController extends Controller{
+class ItemController extends Controller
+{
     /**
      * @var \insolita\redisman\Redisman $module
      */
@@ -44,7 +45,7 @@ class ItemController extends Controller{
                 'actions' => [
                     'move' => ['post'],
                     'delete' => ['post'],
-               //     'remfield' => ['post','pjax','ajax'],
+                    //     'remfield' => ['post','pjax','ajax'],
                     'persist' => ['post'],
                     'update' => ['post'],
                     'append' => ['post'],
@@ -56,28 +57,30 @@ class ItemController extends Controller{
 
     public function actionCreate($type)
     {
-        if(!in_array($type,array_keys(Redisman::$types))){
-            throw new NotFoundHttpException(Redisman::t('redisman','Unsupported type'));
+        if (!in_array($type, array_keys(Redisman::$types))) {
+            throw new NotFoundHttpException(Redisman::t('redisman', 'Unsupported type'));
         }
-        $model=new RedisItem();
-        $model->type=$type;
-        $model->scenario='create';
-        $lastlog=\Yii::$app->session->get('RedisManager_createlog','');
-        $lastlog=explode('[~lastlog~]',$lastlog);
-        if(\Yii::$app->request->isPost){
-            if($model->load(\Yii::$app->request->post()) && $model->validate()){
-                $model->on(RedisItem::EVENT_AFTER_CHANGE,function($event)use($lastlog){
-                        array_unshift($lastlog,$event->command);
-                        \Yii::$app->session->set('RedisManager_createlog',implode('[~lastlog~]',$lastlog));
-                    });
+        $model = new RedisItem();
+        $model->type = $type;
+        $model->scenario = 'create';
+        $lastlog = \Yii::$app->session->get('RedisManager_createlog', '');
+        $lastlog = explode('[~lastlog~]', $lastlog);
+        if (\Yii::$app->request->isPost) {
+            if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
+                $model->on(
+                    RedisItem::EVENT_AFTER_CHANGE, function ($event) use ($lastlog) {
+                        array_unshift($lastlog, $event->command);
+                        \Yii::$app->session->set('RedisManager_createlog', implode('[~lastlog~]', $lastlog));
+                    }
+                );
                 $model->create();
-                \Yii::$app->session->setFlash('success',Redisman::t('redisman','Key created!'));
-            }else{
-                \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+                \Yii::$app->session->setFlash('success', Redisman::t('redisman', 'Key created!'));
+            } else {
+                \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
             }
-            return $this->redirect(['create','type'=>$type]);
+            return $this->redirect(['create', 'type' => $type]);
         }
-        return $this->render('create',compact('model','lastlog'));
+        return $this->render('create', compact('model', 'lastlog'));
 
     }
 
@@ -88,14 +91,14 @@ class ItemController extends Controller{
     public function actionUpdate($key)
     {
         $model = RedisItem::find(urldecode($key))->findValue();
-        $model->scenario='update';
-        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+        $model->scenario = 'update';
+        if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             $model->update();
-        }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+        } else {
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
         }
 
-        return $this->redirect(['view','key'=>$key]);
+        return $this->redirect(['view', 'key' => $key]);
     }
 
     /**
@@ -105,14 +108,14 @@ class ItemController extends Controller{
     public function actionAppend($key)
     {
         $model = RedisItem::find(urldecode($key))->findValue();
-        $model->scenario='append';
-        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+        $model->scenario = 'append';
+        if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             $model->append();
-        }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+        } else {
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
         }
 
-        return $this->redirect(['view','key'=>$key]);
+        return $this->redirect(['view', 'key' => $key]);
     }
 
     /**
@@ -142,16 +145,17 @@ class ItemController extends Controller{
         return $this->renderAjax('_quick', compact('model'));
     }
 
-    public function actionRemfield(){
-        $model=new RedisItem();
-        $model->scenario='remfield';
-        if($model->load(\Yii::$app->request->get()) && $model->validate()) {
+    public function actionRemfield()
+    {
+        $model = new RedisItem();
+        $model->scenario = 'remfield';
+        if ($model->load(\Yii::$app->request->get()) && $model->validate()) {
             $model->remfield();
         }
         $model->findValue();
-        return ($model->type)?
-             $this->renderAjax('form_'.$model->type, compact('model'))
-             :$this->redirect(['view','key'=>urldecode($model->key)]);
+        return ($model->type) ?
+            $this->renderAjax('form_' . $model->type, compact('model'))
+            : $this->redirect(['view', 'key' => urldecode($model->key)]);
     }
 
     /**
@@ -159,12 +163,12 @@ class ItemController extends Controller{
      */
     public function actionDelete()
     {
-        $model=new RedisItem();
-        $model->scenario='delete';
-        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+        $model = new RedisItem();
+        $model->scenario = 'delete';
+        if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             $model->delete();
-        }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+        } else {
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
         }
 
         return $this->redirect(Url::to(['/redisman/default/show']));
@@ -175,15 +179,15 @@ class ItemController extends Controller{
      */
     public function actionPersist()
     {
-        $model=new RedisItem();
-        $model->scenario='persist';
-        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+        $model = new RedisItem();
+        $model->scenario = 'persist';
+        if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             $model->persist();
-        }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+        } else {
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
         }
 
-        return $this->redirect(Url::to(['view', 'key'=>urlencode($model->key)]));
+        return $this->redirect(Url::to(['view', 'key' => urlencode($model->key)]));
     }
 
     /**
@@ -191,9 +195,9 @@ class ItemController extends Controller{
      */
     public function actionMove()
     {
-        $model=new RedisItem();
-        $model->scenario='move';
-        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+        $model = new RedisItem();
+        $model->scenario = 'move';
+        if ($model->load(\Yii::$app->request->post()) && $model->validate()) {
             $model->move();
             \Yii::$app->session->setFlash(
                 'success', Redisman::t(
@@ -201,8 +205,8 @@ class ItemController extends Controller{
                     ['from' => $this->module->getCurrentDb(), 'to' => $model->db]
                 )
             );
-        }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
+        } else {
+            \Yii::$app->session->setFlash('error', Html::errorSummary($model, ['encode' => true]));
         }
         return $this->redirect(Url::to(['/redisman/default/show']));
 

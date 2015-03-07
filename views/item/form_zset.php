@@ -40,7 +40,7 @@ use insolita\redisman\Redisman;
                          'format'=>'raw',
                          'value'=>function($data, $key,$index)use($model){
                              return  '<input type="hidden" name="RedisItem[formatvalue]['.$index.'][field]" value="'
-                             . $data['field'] . '">
+                             . \yii\helpers\Html::encode($data['field']) . '">
                                     <input type="text" name="RedisItem[formatvalue]['.$index.'][score]" value="'
                              . $data['score'] . '">';
                          }
