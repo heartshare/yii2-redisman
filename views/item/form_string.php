@@ -1,13 +1,12 @@
 <p>
     <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
         [
-            'action' => ['/redisman/item/update']
+            'action' => ['/redisman/item/update','key'=>urlencode($model->key)]
         ]
     )?>
-    <input type="hidden" name="key" value="<?=$model->key?>">
-<div class="one">
+ <div class="one">
     <?php
-    echo $form->field($model, 'value')->widget(
+    echo $form->field($model, 'formatvalue')->widget(
         \lav45\aceEditor\AceEditorWidget::className(), [
 
             'mode' => 'text',

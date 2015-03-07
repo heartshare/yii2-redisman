@@ -7,6 +7,7 @@ use insolita\redisman\models\RedisModel;
 use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\helpers\VarDumper;
 
 /**
@@ -66,6 +67,7 @@ class DefaultController extends \yii\web\Controller
         $model = new RedisModel();
         $model->restoreFilter();
         $dataProvider = $model->search(\Yii::$app->request->getQueryParams());
+        Url::remember(\Yii::$app->request->getUrl(),'show');
         return $this->render('show', ['model' => $model, 'dataProvider' => $dataProvider]);
     }
 

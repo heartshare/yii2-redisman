@@ -23,6 +23,7 @@ use yii\web\NotFoundHttpException;
  */
 class RedisItem extends Model
 {
+    const EVENT_AFTER_CHANGE='onchange';
     /**
      * @var string $key
      */
@@ -65,12 +66,17 @@ class RedisItem extends Model
     public $value;
 
     /**
-     * @var string $formatvalue
+     * @var string $field  (HASH|ZSET field idntifier)
+     */
+    public $field;
+
+    /**
+     * @var array|string $formatvalue
      */
     public $formatvalue;
 
     /**
-     * @var string $appendvalue
+     * @var array|string  $appendvalue
      */
     public $appendvalue;
     /**
@@ -98,13 +104,24 @@ class RedisItem extends Model
             ['key','string'],
             ['key','keyExists'],
 
+            ['field','required','on'=>'remfield'],
+            ['field','string'],
+
             ['db','integer','min'=>0],
             ['db','dbValidator','on'=>'move'],
 
+            ['type','required'],
             [['type'], 'in','range'=>array_keys(Redisman::$types)],
-            [['value'], 'string', 'when'=>function($model){return $model->type==Redisman::REDIS_STRING;}],
-            [['formatvalue'], 'string'],
-            [['formatvalue'], 'itemValidator', 'when'=>function($model){return $model->type!=Redisman::REDIS_STRING;}],
+
+            [['formatvalue'], 'string','on'=>'update, create', 'when'=>function($model){
+                return in_array($model->type,[Redisman::REDIS_STRING,Redisman::REDIS_SET,Redisman::REDIS_LIST]);
+            }],
+            [['formatvalue'], 'isarrayValidator','on'=>'update, create', 'when'=>function($model){return ($model->type==Redisman::REDIS_HASH||$model->type==Redisman::REDIS_ZSET);}],
+
+            [['appendvalue'], 'string','on'=>'append', 'when'=>function($model){
+                return in_array($model->type,[Redisman::REDIS_STRING,Redisman::REDIS_SET,Redisman::REDIS_LIST]);
+            }],
+            [['appendvalue'], 'isarrayValidator','on'=>'append', 'when'=>function($model){return ($model->type==Redisman::REDIS_HASH||$model->type==Redisman::REDIS_ZSET);}],
             [['ttl'], 'integer', 'min' => -1]
         ];
     }
@@ -117,18 +134,44 @@ class RedisItem extends Model
     {
         return [
             'default' => ['key', 'value','formatvalue', 'ttl', 'type', 'size', 'refcount', 'encoding', 'idletime', 'db', 'storage'],
-            'update' => ['key','value','formatvalue'],
-            'append' => ['key','value','formatvalue'],
+            'update' => ['key','formatvalue'],
+            'append' => ['key','appendvalue'],
             'persist' => ['key','ttl'],
             'move' => ['key','db'],
              'delete'=>['key'],
-            'create' => ['key', 'value','formatvalue', 'ttl']
+            'create' => ['key', 'formatvalue', 'ttl'],
+            'remfield'=>['key','field']
         ];
+    }
+
+    public function beforeValidate(){
+        if(urldecode($this->key)!==$this->key){
+            $this->key=urldecode($this->key);
+        }
+        if($this->field && Html::decode($this->field)!==$this->field){
+            $this->field=Html::decode($this->field);
+        }
+        if(!$this->type){
+            $this->type=Redisman::getInstance()->type($this->key);
+        }
+        return parent::beforeValidate();
     }
 
     public function keyExists($attribute,$params){
         if(!$check=Redisman::getInstance()->executeCommand('EXISTS',[$this->$attribute])){
             $this->addError($attribute,Redisman::t('redisman', 'Key not found'));
+            return false;
+        }
+        return true;
+    }
+
+    public function isarrayValidator($attribute, $params){
+        if(!is_array($this->$attribute)){
+            $this->addError($attribute,Redisman::t('redisman', 'Wrong field type'));
+            return false;
+        }
+        if(empty($this->$attribute)){
+            $this->addError($attribute,Redisman::t('redisman', 'Can`t be Empty'));
             return false;
         }
         return true;
@@ -144,38 +187,83 @@ class RedisItem extends Model
           }
          return true;
     }
-    /**
-     * @param $attribute
-     * @param $params
-     *
-     * @return bool
-     */
-    public function itemValidator($attribute, $params)
-    {
- 
-                $val=Json::decode($this->attribute);
-                $json=$this->$attribute;
-                $parsejson=mb_substr($json,1,mb_strlen($json)-1);
-                /**
-                 * формат список с заданным разделителем
-                **/
-                /**
-                 * "val1","val2","val3".... REDIS_LIST|REDIS_SET
-                 * "field1","val1","field2","val2"....REDIS_HASH  % 2
-                 * 1,'test1val', 2,'iufri', 5, 'ifurirf'  REDIS_ZSET % 2 - первый в паре - integer
-                */
 
+    public function update(){
+        switch($this->type){
+        case Redisman::REDIS_STRING:
+            $this->addKey($this->type, $this->key, $this->formatvalue);
+            break;
+        case Redisman::REDIS_HASH:
+            foreach($this->formatvalue as $field=>$val){
+                if(!empty($val)){
+                    Redisman::getInstance()->executeCommand('HSET',[$this->key, $field, $val]);
+                }
+            }
+            break;
+        case Redisman::REDIS_ZSET:
+            foreach($this->formatvalue as $field=>$score){
+                if(is_numeric($score)){
+                    Redisman::getInstance()->executeCommand('ZADD',[$this->key,$score,$field]);
+                }
+            }
+            break;
+        case Redisman::REDIS_LIST:
+        case Redisman::REDIS_SET:
+            $insvalue = explode("\r\n",$this->formatvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            Redisman::getInstance()->executeCommand('DEL',[$this->key]);
+            $this->addKey($this->type, $this->key, $insvalue);
+            break;
 
-                if ($this->type == Redisman::REDIS_LIST) {
-
-                } elseif ($this->type == Redisman::REDIS_HASH) {
-                    return true;
-                } elseif ($this->type == Redisman::REDIS_SET) {
-                    return true;
-                } elseif ($this->type == Redisman::REDIS_ZSET) {
-                    return true;
-                } 
+        }
     }
+
+    public function append(){
+        switch($this->type){
+        case Redisman::REDIS_STRING:
+            Redisman::getInstance()->executeCommand('APPEND',[$this->key, $this->appendvalue]);
+            break;
+        case Redisman::REDIS_HASH:
+            foreach($this->appendvalue as $row){
+                if(!empty($row['field']) && !empty($row['value'])){
+                    Redisman::getInstance()->executeCommand('HSET',[$this->key, $row['field'], $row['value']]);
+                }
+            }
+            break;
+        case Redisman::REDIS_ZSET:
+            foreach($this->appendvalue as $row){
+                if(!empty($row['field']) && !empty($row['score']) && is_numeric($row['score'])){
+                    Redisman::getInstance()->executeCommand('ZADD',[$this->key, $row['score'], $row['field']]);
+                }
+            }
+            break;
+        case Redisman::REDIS_LIST:
+        case Redisman::REDIS_SET:
+            $insvalue = explode("\r\n",$this->appendvalue);
+            foreach($insvalue as &$fv){
+                $fv=trim($fv);
+            }
+            $this->addKey($this->type, $this->key, $insvalue);
+            break;
+
+        }
+    }
+
+    public function remfield(){
+        switch($this->type) {
+        case Redisman::REDIS_HASH:
+            Redisman::getInstance()->executeCommand('HDEL',[$this->key, $this->field]);
+            break;
+        case Redisman::REDIS_ZSET:
+            Redisman::getInstance()->executeCommand('ZREM',[$this->key, $this->field]);
+            break;
+        default:
+        }
+     }
+
+
 
     /**
      * @return array
@@ -261,11 +349,11 @@ class RedisItem extends Model
     public function getValue()
     {
         switch($this->type){
-        case Redisman::REDIS_STRING: return Redisman::getInstance()->executeCommand('GET', [$this->key]);
-        case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('LRANGE', [$this->key, 0, -1]);
-        case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HGETALL', [$this->key]);
+        case Redisman::REDIS_STRING: return Redisman::getInstance()->executeCommand('GET', [$this->key]);break;
+        case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('LRANGE', [$this->key, 0, -1]);break;
+        case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HGETALL', [$this->key]);break;break;
         case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('SMEMBERS', [$this->key]);
-        case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZRANGE', [$this->key, 0, -1, 'WITHSCORES']);
+        case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZRANGE', [$this->key, 0, -1, 'WITHSCORES']);break;
         default:return false;
         }
     }
@@ -304,7 +392,7 @@ class RedisItem extends Model
                 'sort' =>$sort,
                 'pagination' => [
                     'totalCount' => $totalcount,
-                    'pageSize' => 20,
+                    'pageSize' => 15,
                 ]
             ]);
     }
@@ -325,10 +413,10 @@ class RedisItem extends Model
         } elseif (is_array($value)) {
             array_unshift($value, $key);
             switch($type){
-            case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('RPUSH', $value);
-            case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HMSET', $value);
-            case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('SADD', $value);
-            case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('ZADD', $value);
+            case Redisman::REDIS_LIST:  return Redisman::getInstance()->executeCommand('RPUSH', $value);break;
+            case Redisman::REDIS_HASH: return Redisman::getInstance()->executeCommand('HMSET', $value);break;
+            case Redisman::REDIS_SET: return Redisman::getInstance()->executeCommand('SADD', $value);break;
+            case Redisman::REDIS_ZSET: return Redisman::getInstance()->executeCommand('ZADD', $value);break;
             default:return false;
             }
 

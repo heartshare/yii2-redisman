@@ -14,6 +14,7 @@ use insolita\redisman\Redisman;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use yii\helpers\VarDumper;
 use yii\web\Controller;
 
 class ItemController extends Controller{
@@ -43,8 +44,10 @@ class ItemController extends Controller{
                 'actions' => [
                     'move' => ['post'],
                     'delete' => ['post'],
-                    'remfield' => ['post'],
+               //     'remfield' => ['post','pjax','ajax'],
                     'persist' => ['post'],
+                    'update' => ['post'],
+                    'append' => ['post'],
                 ],
             ]
         ];
@@ -65,16 +68,32 @@ class ItemController extends Controller{
      * @return string
      * @throws \yii\web\NotFoundHttpException
      */
-    public function actionUpdate()
+    public function actionUpdate($key)
     {
-        $key=\Yii::$app->request->post('key',null);
         $model = RedisItem::find(urldecode($key))->findValue();
         $model->scenario='update';
         if($model->load(\Yii::$app->request->post()) && $model->validate()){
-            $model->save();
+            $model->update();
+        }else{
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
         }
 
-        return $this->redirect(['view','key'=>urlencode($key)]);
+        return $this->redirect(['view','key'=>$key]);
+    }
+
+    /**
+     * @return string
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionAppend($key)
+    {
+        $model = RedisItem::find(urldecode($key))->findValue();
+        $model->scenario='append';
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
+            $model->append();
+        }
+
+        return $this->redirect(['view','key'=>$key]);
     }
 
     /**
@@ -85,6 +104,7 @@ class ItemController extends Controller{
      */
     public function actionView($key)
     {
+
         $model = RedisItem::find(urldecode($key))->findValue();
 
         return $this->render('view', compact('model'));
@@ -104,7 +124,13 @@ class ItemController extends Controller{
     }
 
     public function actionRemfield(){
-
+        $model=new RedisItem();
+        $model->scenario='remfield';
+        if($model->load(\Yii::$app->request->get()) && $model->validate()) {
+            $model->remfield();
+        }
+        $model->findValue();
+        return $this->renderAjax('form_'.$model->type, compact('model'));
     }
 
     /**
@@ -114,10 +140,10 @@ class ItemController extends Controller{
     {
         $model=new RedisItem();
         $model->scenario='delete';
-        if($model->load(\Yii::$app->request->post())){
+        if($model->load(\Yii::$app->request->post()) && $model->validate()){
             $model->delete();
         }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
         }
 
         return $this->redirect(Url::to(['/redisman/default/show']));
@@ -133,10 +159,10 @@ class ItemController extends Controller{
         if($model->load(\Yii::$app->request->post()) && $model->validate()){
             $model->persist();
         }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
         }
 
-        return $this->redirect(Url::to(['/redisman/default/view', 'key'=>urlencode($model->key)]));
+        return $this->redirect(Url::to(['view', 'key'=>urlencode($model->key)]));
     }
 
     /**
@@ -155,9 +181,9 @@ class ItemController extends Controller{
                 )
             );
         }else{
-            \Yii::$app->session->setFlash('error',Html::errorSummary($model->getErrors()));
+            \Yii::$app->session->setFlash('error',Html::errorSummary($model,['encode'=>true]));
         }
-        return $this->redirect(['show']);
+        return $this->redirect(Url::to(['/redisman/default/show']));
 
     }
 } 

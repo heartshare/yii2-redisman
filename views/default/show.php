@@ -42,9 +42,10 @@ $this->title=$module->getCurrentName();
                         'delete' => function ($url, $model) {
                             return  Html::a(
                                 '<i class="icon circular small  trash red"></i>',
-                                    \yii\helpers\Url::to(['/redisman/item/delete', 'key' => urlencode($model['key'])]),
+                                    \yii\helpers\Url::to(['/redisman/item/delete']),
                                     [
                                         'data-pjax' => 0,
+                                        'data-params'=>['RedisItem[key]' => urlencode($model['key'])],
                                         'data-confirm' => 'Подтвердите действие', 'data-method' => 'post'
                                         , 'title'=>Yii::t('app','Delete')
                                     ]

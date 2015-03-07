@@ -93,6 +93,7 @@ $this->beginPage();
                 )?>
 
                 <?= \insolita\redisman\widgets\Alert::widget([
+                        'encode'=>false,
                         'successTitle'=>Redisman::t('redisman','Success!'),
                         'errorTitle'=>Redisman::t('redisman','Error!'),
                         'warningTitle'=>Redisman::t('redisman','Warning!'),

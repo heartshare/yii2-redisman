@@ -21,13 +21,13 @@ foreach ($dblist as $db => $dbalias) {
                 $dbalias, \yii\helpers\Url::to(
                     [
                         '/redisman/item/move',
-                        'key' => urlencode($model->key),
-                        'db' => $db
+
                     ]
                 ), [
                     'data-method' => 'post', 'data-confirm' => Redisman::t(
                         'redisman', 'O`RLY? Current action move this key in other redis-base!'
-                    )
+                    ),'data-params'=>[  'RedisItem[key]' => urlencode($model->key),
+                        'RedisItem[db]' => $db]
                 ]
             ), ['class' => 'item']
         );
@@ -96,4 +96,10 @@ $items = Html::tag('div', implode('', $items), ['class' => 'menu']);
             </div>
         </div>
     </div>
+    <?php if(\yii\helpers\Url::previous('show')):?>
+        <?=Html::a('<i class="icon backward"></i>'.Redisman::t('redisman','Go back'),\yii\helpers\Url::previous('show'),['class'=>'ui icon blue button'])?>
+    <?php endif;?>
 </div>
+<?php
+  $this->registerJs("$('.tabular.menu .item').tab();");
+?>

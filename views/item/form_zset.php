@@ -12,17 +12,22 @@ use insolita\redisman\Redisman;
     <div class="active item" data-tab="tabedit"><?=Redisman::t('redisman','Edit')?></div>
     <div class="item" data-tab="tabappend"><?=Redisman::t('redisman','Append')?></div>
 </div>
+<p><?=Redisman::t('redisman','Empty fields will not saved')?></p>
+
 <div class="ui bottom attached active tab segment"  data-tab="tabedit">
-    <p>
+
         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/item/update']
+                'action' => ['/redisman/item/update','key'=>urlencode($model->key)]
             ]
         )?>
-        <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
+
         <input type="hidden" name="page" value="<?=(int)Yii::$app->request->get('page',1)?>">
 
     <div class="one">
+        <?php
+          \yii\widgets\Pjax::begin(['timeout'=>5000,'id'=>'zsetpjax','enablePushState'=>false]);
+        ?>
         <?php
         echo \Zelenin\yii\SemanticUI\widgets\GridView::widget([
                 'dataProvider'=>$model->formatvalue,
@@ -40,12 +45,16 @@ use insolita\redisman\Redisman;
                          'template'=>'{remove}',
                          'buttons'=>[
                              'remove'=>function($url,$data)use($model){
-                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/item/remfield', 'key'=>$model->key,'field'=>$data['field']]);
+                                 return \yii\helpers\Html::a('<i class="icon remove"></i>',['/redisman/item/remfield'],
+                                     ['title'=>Redisman::t('redisman','Remove field'), 'data-pjax'=>1,'data-method'=>'post','data-params'=>['key'=>urlencode($model->key),'field'=>$data['field']]]);
                              }
                          ]
                      ]
                  ]
             ])
+        ?>
+        <?php
+        \yii\widgets\Pjax::end();
         ?>
     </div>    <br/>
 
@@ -54,31 +63,28 @@ use insolita\redisman\Redisman;
         </button>
     </div>
     <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>
-    </p></div>
+    </div>
 
 <div class="ui bottom attached  tab segment"  data-tab="tabappend">
-    <p>
-        <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
+         <?php $form = \Zelenin\yii\SemanticUI\widgets\ActiveForm::begin(
             [
-                'action' => ['/redisman/item/update']
+                'action' => ['/redisman/item/append','key'=>urlencode($model->key)]
             ]
         )?>
-        <input type="hidden" name="RedisItem[key]" value="<?=$model->key?>">
-    <div class="one">
+     <div class="one">
         <table class="ui table bordered">
          <thead><th><?=Redisman::t('redisman','field')?></th><th><?=Redisman::t('redisman','score')?></th></thead>
         <?php for($i=0; $i<=10;$i++):?>
             <tr>
-                <td><input type="text" name="RedisItem[formatvalue][][field]" value=""></td>
-                <td>'<input type="text" name="RedisItem[formatvalue][][score]" value="">'</td>
+                <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][field]" value=""></td>
+                <td><input type="text" name="RedisItem[appendvalue][<?=$i?>][score]" value=""></td>
             </tr>
         <?php endfor?>
         </table>
     </div>
     <div class="one">
-        <button class="ui blue icon button submit"><i class="save icon"></i><?= Yii::t('app', 'Append') ?>
+        <button class="ui blue icon button submit"><i class="save icon"></i><?=  Redisman::t('redisman', 'Append') ?>
         </button>
     </div>
     <?php \Zelenin\yii\SemanticUI\widgets\ActiveForm::end() ?>
-    </p>
-</div>
+ </div>
