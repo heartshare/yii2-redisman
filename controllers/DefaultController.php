@@ -144,13 +144,10 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionFlushdb()
     {
-        $this->module->dbFlush();
-        if (\Yii::$app->request->isAjax) {
-            echo 'ok';
-        } else {
+        if($this->module->dbFlush()){
             \Yii::$app->session->setFlash('success', Redisman::t('redisman', 'Clearind Database'));
-            return $this->redirect(['index']);
         }
+        return $this->redirect(['index']);
     }
 
     /**
