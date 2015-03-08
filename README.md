@@ -6,7 +6,7 @@ Manage Redis Databases (beta)
 
 Interface for work with different redis-connections, swtih between databases, search keys by patterns, edit\update\delete
 You can use yii2-redis connection, or custom module component that work via php-redis extension
- * Semantic-UI interface
+ * Use Semantic-UI
 
 Installation
 ------------
