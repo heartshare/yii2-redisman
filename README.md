@@ -58,8 +58,10 @@ Usage
                'on beforeFlushDB'=>function($event){
                                if($event->data['db']==3){
                                     $event->isValid=false;
+                                    return false;
                                }else{
                                    $event->isValid=true;
+                                   return true;
                                }
                            },
            ],
