@@ -14,6 +14,7 @@
 		"yiisoft/yii2": "*",
 		"yiisoft/yii2-redis":"*",
 		"zelenin/yii2-semantic-ui": "*",
+		"lav45/yii2-aceeditor": "*"
 	},
 	"autoload": {
 		"psr-4": {
