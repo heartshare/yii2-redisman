@@ -364,7 +364,7 @@ class RedisItem extends Model
             );
             $event = new Event();
             $event->data = $model->getAttributes();
-            $model->onAfterChange($event);
+            $model->onAfterFind($event);
             return $model;
         }
     }
@@ -575,6 +575,10 @@ class RedisItem extends Model
     public function onAfterChange($event){
         TagDependency::invalidate(\Yii::$app->cache,'RedisManager_cachedep');
         $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+    }
+
+    public function onAfterFind($event){
+        $this->trigger(self::EVENT_AFTER_FIND, $event);
     }
 
     /**
