@@ -255,8 +255,8 @@ class Redisman extends Module
         if (!isset($this->connections[$name])) {
             throw new ErrorException(self::t('redisman', 'Wrong redis connection name'));
         } else {
-            $this->_conCurrent = $name;
             $this->_connect = $this->getConnection(true, $db);
+            $this->_conCurrent = $name;
             \Yii::$app->session->set('RedisManager_conCurrent', $this->_conCurrent);
             \Yii::$app->session->set('RedisManager_dbCurrent', $this->_dbCurrent);
             return $this->_connect;

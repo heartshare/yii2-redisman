@@ -92,6 +92,7 @@ return [
     'Switched to' => 'Переключено на',
     'Type' => 'Тип',
     'Value' => 'Значение',
+    'Wrong array data'=>'Некорректный массив данных',
     'Wrong  redis type - it must be array' => 'Некорректное значение типа',
     'Wrong module configuration! Please set array of available redis connections' => 'Некорректная конфигурация модуля. Настройте доступные подключения к Редискам',
     'Wrong module configuration! Wrong configuration defRedis param' => 'Некорректная конфигурация модуля. Задайте правильное название соединения по умолчанию',
