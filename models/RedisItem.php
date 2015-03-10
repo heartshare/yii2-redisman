@@ -135,15 +135,7 @@ class RedisItem extends Model
             [['type'], 'in', 'range' => array_keys(Redisman::$types)],
 
             [
-                ['formatvalue'], 'string', 'on' => 'update, append, create', 'when' => function ($model) {
-                return in_array($model->type, [Redisman::REDIS_STRING, Redisman::REDIS_SET, Redisman::REDIS_LIST]);
-            }
-            ],
-            [
-                ['formatvalue'], 'isarrayValidator', 'on' => 'update, append, create', 'when' => function ($model) {
-                return ($model->type == Redisman::REDIS_HASH
-                    || $model->type == Redisman::REDIS_ZSET);
-                }
+                ['formatvalue'], 'valueValidator', 'on' => ['update', 'append', 'create']
             ],
 
             [['ttl'], 'integer', 'min' => -1],
@@ -214,23 +206,35 @@ class RedisItem extends Model
      *
      * @return bool
      */
-    public function isarrayValidator($attribute, $params)
+    public function valueValidator($attribute, $params)
     {
-        if (!is_array($this->$attribute)) {
-            $this->addError($attribute, Redisman::t('redisman', 'Wrong field type'));
-            return false;
-        }
-        if (empty($this->$attribute)) {
-            $this->addError($attribute, Redisman::t('redisman', 'Can`t be Empty'));
-            return false;
-        }
-        foreach($this->$attribute as $k=>$v){
-            if(!is_string($v) || !is_numeric($v)){
-                $this->addError($attribute, Redisman::t('redisman', 'Wrong array data'));
+        if(in_array($this->type, [Redisman::REDIS_STRING, Redisman::REDIS_SET, Redisman::REDIS_LIST])){
+            if(!is_string($this->$attribute)){
+                $this->addError($attribute, Redisman::t('redisman', 'Wrong value format'));
+                return false;
+            }else{
+                return true;
+            }
+        }else{
+            if (!is_array($this->$attribute)) {
+                $this->addError($attribute, Redisman::t('redisman', 'Wrong value format'));
                 return false;
             }
+            if (empty($this->$attribute)) {
+                $this->addError($attribute, Redisman::t('redisman', 'Can`t be Empty'));
+                return false;
+            }
+
+
+            foreach($this->$attribute as $k=>$v){
+                if(!isset($v['field']) || (!isset($v['score']) && $this->type==Redisman::REDIS_ZSET) || (!isset($v['value']) && $this->type==Redisman::REDIS_HASH)){
+                    $this->addError($attribute, Redisman::t('redisman', 'Wrong array data'));
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+
     }
 
     /**
@@ -408,7 +412,6 @@ class RedisItem extends Model
             break;
         case Redisman::REDIS_HASH:
             return Redisman::getInstance()->executeCommand('HGETALL', [$this->key]);
-            break;
             break;
         case Redisman::REDIS_SET:
             return Redisman::getInstance()->executeCommand('SMEMBERS', [$this->key]);
