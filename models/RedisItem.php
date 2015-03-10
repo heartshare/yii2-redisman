@@ -13,6 +13,7 @@ use insolita\redisman\events\ModifyEvent;
 use insolita\redisman\Redisman;
 use yii\base\Event;
 use yii\base\Model;
+use yii\caching\TagDependency;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -270,7 +271,7 @@ class RedisItem extends Model
             Redisman::getInstance()->executeCommand('DEL', [$this->key]);
         }
         $event->command .= $this->save();
-        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+        $this->onAfterChange($event);
     }
 
     /**
@@ -289,7 +290,7 @@ class RedisItem extends Model
             Redisman::getInstance()->executeCommand('EXPIRE', [$this->key, $this->ttl]);
 
         }
-        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+        $this->onAfterChange($event);
     }
 
     /**
@@ -303,7 +304,7 @@ class RedisItem extends Model
         $event->connection = Redisman::getInstance()->getCurrentConn();
         $event->db = Redisman::getInstance()->getCurrentDb();
         $event->command = $this->save();
-        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+        $this->onAfterChange($event);
     }
 
     /**
@@ -320,12 +321,12 @@ class RedisItem extends Model
         case Redisman::REDIS_HASH:
             $event->operation = Html::encode('HDEL ' . $this->key . ' ' . $this->field);
             Redisman::getInstance()->executeCommand('HDEL', [$this->key, $this->field]);
-            $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+            $this->onAfterChange($event);
             break;
         case Redisman::REDIS_ZSET:
             $event->operation = Html::encode('ZREM ' . $this->key . ' ' . $this->field);
             Redisman::getInstance()->executeCommand('ZREM', [$this->key, $this->field]);
-            $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+            $this->onAfterChange($event);
             break;
         default:
         }
@@ -363,10 +364,11 @@ class RedisItem extends Model
             );
             $event = new Event();
             $event->data = $model->getAttributes();
-            $model->trigger(self::EVENT_AFTER_FIND, $event);
+            $model->onAfterChange($event);
             return $model;
         }
     }
+
 
     /**
      * @return $this
@@ -537,7 +539,7 @@ class RedisItem extends Model
             $event->command = Html::encode('EXPIRE ' . $this->key . ' ' . $this->ttl);
             Redisman::getInstance()->executeCommand('EXPIRE', [$this->key, $this->ttl]);
         }
-        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+        $this->onAfterChange($event);
     }
 
     /**
@@ -552,7 +554,7 @@ class RedisItem extends Model
         $event->db = Redisman::getInstance()->getCurrentDb();
         $event->command = Html::encode('MOVE ' . $this->key . ' ' . $this->db);
         Redisman::getInstance()->executeCommand('MOVE', [$this->key, $this->db]);
-        $this->trigger(self::EVENT_AFTER_CHANGE, $event);
+        $this->onAfterChange($event);
     }
 
     /**
@@ -567,6 +569,11 @@ class RedisItem extends Model
         $event->db = Redisman::getInstance()->getCurrentDb();
         $event->command = Html::encode('DEL ' . $this->key);
         Redisman::getInstance()->executeCommand('DEL', [$this->key]);
+        $this->onAfterChange($event);
+    }
+
+    public function onAfterChange($event){
+        TagDependency::invalidate(\Yii::$app->cache,'RedisManager_cachedep');
         $this->trigger(self::EVENT_AFTER_CHANGE, $event);
     }
 

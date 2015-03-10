@@ -10,7 +10,9 @@ namespace insolita\redisman\models;
 
 
 use insolita\redisman\Redisman;
+use yii\base\Event;
 use yii\base\Model;
+use yii\caching\TagDependency;
 use yii\data\ArrayDataProvider;
 use yii\helpers\ArrayHelper;
 
@@ -39,7 +41,9 @@ class RedisModel extends Model
      */
     public $encache;
 
-
+    public function init(){
+        parent::init();
+    }
 
     /**
      * @return array the validation rules.
@@ -132,9 +136,12 @@ class RedisModel extends Model
         }
         if (!empty($data)) {
             if ($this->encache) {
-                \Yii::$app->cache->set(
-                    $this->getSearchId() . ':' . $page, $data, Redisman::getInstance()->queryCacheDuration
+                $dep=new TagDependency();
+                $dep->data='RedisManager_cachedep';
+                 \Yii::$app->cache->set(
+                    $this->getSearchId() . ':' . $page, $data, Redisman::getInstance()->queryCacheDuration, $dep
                 );
+
             }
             $totalcount = array_pop($data);
             $allModels = [];

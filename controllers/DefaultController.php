@@ -5,6 +5,7 @@ namespace insolita\redisman\controllers;
 use insolita\redisman\models\ConnectionForm;
 use insolita\redisman\models\RedisModel;
 use insolita\redisman\Redisman;
+use yii\caching\TagDependency;
 use yii\filters\VerbFilter;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -181,7 +182,7 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionResetAppCache()
     {
-        \Yii::$app->cache->flush();
+        TagDependency::invalidate(\Yii::$app->cache,'RedisManager_cachedep');
         return $this->redirect(['index']);
     }
 
