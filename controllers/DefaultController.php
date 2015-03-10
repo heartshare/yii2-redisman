@@ -181,7 +181,8 @@ class DefaultController extends \yii\web\Controller
      */
     public function actionResetAppCache()
     {
-        //@TODO:$this
+        \Yii::$app->cache->flush();
+        return $this->redirect(['index']);
     }
 
 } 

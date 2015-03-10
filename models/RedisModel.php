@@ -131,6 +131,11 @@ class RedisModel extends Model
 
         }
         if (!empty($data)) {
+            if ($this->encache) {
+                \Yii::$app->cache->set(
+                    $this->getSearchId() . ':' . $page, $data, Redisman::getInstance()->queryCacheDuration
+                );
+            }
             $totalcount = array_pop($data);
             $allModels = [];
             foreach ($data as $i => $row) {
@@ -138,11 +143,7 @@ class RedisModel extends Model
                     'id' => $start + $i, 'key' => $row[0], 'type' => $row[1], 'size' => $row[2], 'ttl' => $row[3]
                 ];
             }
-            if ($this->encache) {
-                \Yii::$app->cache->set(
-                    $this->getSearchId() . ':' . $page, $data, Redisman::getInstance()->queryCacheDuration
-                );
-            }
+
         } else {
             $allModels = [];
             $totalcount = 0;
