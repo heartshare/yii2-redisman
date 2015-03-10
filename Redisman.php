@@ -233,7 +233,6 @@ class Redisman extends Module
             $this->_dbCount = $this->configGetDatabases();
             if (!is_null($db) && $db <= $this->_dbCount && $db != $this->_connect->database) {
                 $this->executeCommand('SELECT', [$db]);
-                //$this->_connect->select($db);
                 $this->_dbCurrent = $db;
             } else {
                 $this->_dbCurrent = $this->_connect->database;
@@ -333,7 +332,7 @@ class Redisman extends Module
     }
 
     /**
-     *
+     * Run redis async database saving
      */
     public function dbSave()
     {
@@ -341,7 +340,8 @@ class Redisman extends Module
     }
 
     /**
-     *
+     * Flush current database
+     * @return bool
      */
     public function dbFlush()
     {
@@ -459,7 +459,6 @@ class Redisman extends Module
      */
     public static function t($category, $message, $params = [], $language = null)
     {
-        //return \Yii::t('redisman', $message, $params, $language);
         return \Yii::t('insolita/redisman/' . $category, $message, $params, $language);
     }
 

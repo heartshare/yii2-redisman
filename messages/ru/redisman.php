@@ -75,6 +75,7 @@ return [
     'Idle time' => 'Время с последнего изменения(Idletime)',
     'Info' => 'Информация о базе',
     'Key' => 'Redis-ключ',
+    'Key exist already'=>'Ключ уже существует в этой базе',
     'Key Information' => 'Информация о ключе',
     'Key Length' => 'Размер',
     'Keys type' => 'Тип',

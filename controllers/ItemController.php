@@ -17,6 +17,11 @@ use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
+/**
+ * Class ItemController
+ *
+ * @package insolita\redisman\controllers
+ */
 class ItemController extends Controller
 {
     /**
@@ -45,7 +50,6 @@ class ItemController extends Controller
                 'actions' => [
                     'move' => ['post'],
                     'delete' => ['post'],
-                    //     'remfield' => ['post','pjax','ajax'],
                     'persist' => ['post'],
                     'update' => ['post'],
                     'append' => ['post'],
@@ -55,6 +59,12 @@ class ItemController extends Controller
     }
 
 
+    /**
+     * @param $type
+     *
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException
+     */
     public function actionCreate($type)
     {
         if (!in_array($type, array_keys(Redisman::$types))) {
@@ -85,7 +95,7 @@ class ItemController extends Controller
     }
 
     /**
-     * @return string
+     * @return \yii\web\Response
      * @throws \yii\web\NotFoundHttpException
      */
     public function actionUpdate($key)
@@ -101,9 +111,12 @@ class ItemController extends Controller
         return $this->redirect(['view', 'key' => $key]);
     }
 
+
     /**
-     * @return string
-     * @throws \yii\web\NotFoundHttpException
+     * @param $key
+     *
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException
      */
     public function actionAppend($key)
     {
@@ -145,6 +158,9 @@ class ItemController extends Controller
         return $this->renderAjax('_quick', compact('model'));
     }
 
+    /**
+     * @return \yii\web\Response
+     */
     public function actionRemfield()
     {
         $model = new RedisItem();

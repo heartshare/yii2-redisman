@@ -123,6 +123,7 @@ class RedisItem extends Model
 
             ['key', 'string'],
             ['key', 'keyExists', 'except' => 'create'],
+            ['key', 'keyExists', 'on' => 'create', 'params' => ['not' => true]],
 
             ['field', 'required', 'on' => 'remfield'],
             ['field', 'string'],
@@ -142,7 +143,7 @@ class RedisItem extends Model
                 ['formatvalue'], 'isarrayValidator', 'on' => 'update, append, create', 'when' => function ($model) {
                 return ($model->type == Redisman::REDIS_HASH
                     || $model->type == Redisman::REDIS_ZSET);
-            }
+                }
             ],
 
             [['ttl'], 'integer', 'min' => -1],
@@ -190,14 +191,18 @@ class RedisItem extends Model
 
     /**
      * @param string $attribute
-     * @param array $params
+     * @param array  $params
      *
      * @return bool
      */
     public function keyExists($attribute, $params)
     {
-        if (!$check = Redisman::getInstance()->executeCommand('EXISTS', [$this->$attribute])) {
+        $check = Redisman::getInstance()->executeCommand('EXISTS', [$this->$attribute]);
+        if (!$check && ArrayHelper::getValue($params, 'not', false) !== true) {
             $this->addError($attribute, Redisman::t('redisman', 'Key not found'));
+            return false;
+        } elseif ($check && ArrayHelper::getValue($params, 'not', false) == true) {
+            $this->addError($attribute, Redisman::t('redisman', 'Key exist already'));
             return false;
         }
         return true;
@@ -205,7 +210,7 @@ class RedisItem extends Model
 
     /**
      * @param string $attribute
-     * @param array $params
+     * @param array  $params
      *
      * @return bool
      */
@@ -224,7 +229,7 @@ class RedisItem extends Model
 
     /**
      * @param string $attribute
-     * @param array $params
+     * @param array  $params
      *
      * @return bool
      */
@@ -259,7 +264,7 @@ class RedisItem extends Model
     }
 
     /**
-     * Create new key with data (Or update if key exists)
+     * Create new key with data
      */
     public function create()
     {
@@ -346,9 +351,9 @@ class RedisItem extends Model
                     compact('type', 'size', 'ttl', 'refcount', 'idletime', 'encoding')
                 ), false
             );
-            $event=new Event();
-            $event->data=$model->getAttributes();
-            $model->trigger(self::EVENT_AFTER_FIND,$event);
+            $event = new Event();
+            $event->data = $model->getAttributes();
+            $model->trigger(self::EVENT_AFTER_FIND, $event);
             return $model;
         }
     }
@@ -379,7 +384,6 @@ class RedisItem extends Model
 
         return $this;
     }
-
 
 
     /**
@@ -507,7 +511,7 @@ class RedisItem extends Model
     }
 
     /**
-     *
+     * Set\remove key expiration
      */
     public function persist()
     {
@@ -528,7 +532,7 @@ class RedisItem extends Model
     }
 
     /**
-     *
+     * Move key between databases
      */
     public function move()
     {
@@ -543,7 +547,7 @@ class RedisItem extends Model
     }
 
     /**
-     *
+     * Delete key
      */
     public function delete()
     {
