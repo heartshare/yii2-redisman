@@ -140,7 +140,7 @@ class RedisModel extends Model
             }
             if ($this->encache) {
                 \Yii::$app->cache->set(
-                    $this->getSearchId() . ':' . $page, $allModels, Redisman::getInstance()->queryCacheDuration
+                    $this->getSearchId() . ':' . $page, $data, Redisman::getInstance()->queryCacheDuration
                 );
             }
         } else {
