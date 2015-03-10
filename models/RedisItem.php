@@ -224,6 +224,12 @@ class RedisItem extends Model
             $this->addError($attribute, Redisman::t('redisman', 'Can`t be Empty'));
             return false;
         }
+        foreach($this->$attribute as $k=>$v){
+            if(!is_string($v) || !is_numeric($v)){
+                $this->addError($attribute, Redisman::t('redisman', 'Wrong array data'));
+                return false;
+            }
+        }
         return true;
     }
 
