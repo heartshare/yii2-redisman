@@ -9,7 +9,7 @@
 namespace insolita\redisman;
 
 
-use insolita\redisman\components\NativeConnection;
+use insolita\redisman\components\PhpredisConnection;
 use yii\base\ErrorException;
 use yii\base\InvalidConfigException;
 use yii\base\ModelEvent;
@@ -291,7 +291,7 @@ class Redisman extends Module
         $infoex = [];
         $section = 'Undefined';
 
-        if ($this->_connect instanceof NativeConnection) {
+        if ($this->_connect instanceof PhpredisConnection) {
             $sects = [
                 'server', 'clients', 'memory', 'persistence', 'stats', 'cpu', 'commandstats', 'clusters', 'keyspace'
             ];
@@ -363,8 +363,15 @@ class Redisman extends Module
      */
     public function executeCommand($command, $params = [])
     {
-        if ($command == 'EVAL' && $this->_connect instanceof NativeConnection) {
-            return $this->_connect->evaluate($params[0], [], 0);
+
+        if($this->_connect instanceof PhpredisConnection){
+            if($command == 'EVAL'){
+                return $this->_connect->evaluate($params[0], [], 0);
+            }
+            if($command =='HMSET'){
+                $key=array_shift($params);
+                return $this->_connect->hMSet($key,$params);
+            }
         }
         return $this->_connect->executeCommand($command, $params);
     }
@@ -374,7 +381,7 @@ class Redisman extends Module
      */
     public function configGetDatabases()
     {
-        if ($this->_connect instanceof NativeConnection) {
+        if ($this->_connect instanceof PhpredisConnection) {
             return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])['databases'];
         } else {
             return $this->_connect->executeCommand('CONFIG', ['GET', 'databases'])[1];
@@ -394,7 +401,7 @@ class Redisman extends Module
             } else {
                 foreach ($this->connectionList() as $item) {
                     $cn = \Yii::createObject($this->connections[$item]);
-                    if ($cn instanceof NativeConnection) {
+                    if ($cn instanceof PhpredisConnection) {
                         $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases']);
                     } else {
                         $this->_totalDbCount[$item] = $cn->executeCommand('CONFIG', ['GET', 'databases'])[1];

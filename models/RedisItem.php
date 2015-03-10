@@ -8,7 +8,7 @@
 
 namespace insolita\redisman\models;
 
-use insolita\redisman\components\NativeConnection;
+use insolita\redisman\components\PhpredisConnection;
 use insolita\redisman\events\ModifyEvent;
 use insolita\redisman\Redisman;
 use yii\base\Event;
@@ -376,7 +376,7 @@ class RedisItem extends Model
             break;
         case Redisman::REDIS_HASH:
         case Redisman::REDIS_ZSET:
-            if (!Redisman::getInstance()->getConnection() instanceof NativeConnection) {
+            if (!Redisman::getInstance()->getConnection() instanceof PhpredisConnection) {
                 $this->value = $this->arrayAssociative($this->value);
             }
             $this->formatvalue = $this->valueDataProvider();

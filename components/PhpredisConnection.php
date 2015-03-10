@@ -14,12 +14,12 @@ use yii\base\Exception;
 use yii\redis\Connection;
 
 /**
- * Class NativeConnection  via phpredis php-extension
+ * Class PhpredisConnection  via phpredis php-extension
  * Early beta not recommended for use in production
  *
  * @package insolita\redisman\components
  */
-class NativeConnection extends Connection{
+class PhpredisConnection extends Connection{
 
     /**
      * @var \Redis $_socket
