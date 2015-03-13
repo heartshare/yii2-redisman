@@ -98,6 +98,7 @@ class PhpredisConnection extends Connection{
         'PSUBSCRIBE'=>'psubscribe', // pattern [pattern ...] Listen for messages published to channels matching the given patterns
         'PTTL'=>'pttl', // key Get the time to live for a key in milliseconds
         'PUBLISH'=>'publish', // channel message Post a message to a channel
+        'PUBSUB'=>'pubsub', // channel message Post a message to a channel
         'PUNSUBSCRIBE'=>'punsubscribe', // [pattern [pattern ...]] Stop listening for messages posted to channels matching the given patterns
         'RANDOMKEY'=>'randomKey', // Return a random key from the keyspace
         'RENAME'=>'rename', // key newkey Rename a key
