@@ -27,6 +27,11 @@ class PhpredisConnection extends Connection{
     private $_socket;
 
     /**
+     * @var bool $persist - use Persistent connection (pconnect instead of connect)
+    **/
+    public $persist=true;
+
+    /**
      * @var array List of available redis commands https://github.com/phpredis/phpredis
      */
     public $redisCommands = [
@@ -184,9 +189,19 @@ class PhpredisConnection extends Connection{
         \Yii::trace('Opening redis DB connection: ' . $connection, __METHOD__);
         $this->_socket=new \Redis();
         if($this->unixSocket){
-            $this->_socket->connect($this->unixSocket, $this->port, $this->dataTimeout);
+            if($this->persist){
+                $this->_socket->pconnect($this->unixSocket, $this->port, $this->dataTimeout);
+            }else{
+                $this->_socket->connect($this->unixSocket, $this->port, $this->dataTimeout);
+            }
+
         }else{
-            $this->_socket->connect($this->hostname, $this->port, $this->dataTimeout);
+            if($this->persist){
+                $this->_socket->pconnect($this->hostname, $this->port, $this->dataTimeout);
+            }else{
+                $this->_socket->connect($this->hostname, $this->port, $this->dataTimeout);
+            }
+
         }
         if (isset($this->password)) {
             if ($this->_socket->auth($this->password) === false) {
@@ -212,7 +227,33 @@ class PhpredisConnection extends Connection{
             throw new Exception(Redisman::t('redisman','Method '.$name.' not supported by '.get_class($this).' yet'));
         }
         $name=$this->redisCommands[$name];
-        return call_user_func_array(array($this->_socket,$name), $params);
+        $i=0;
+        while($i<15) {
+            try{
+                return call_user_func_array(array($this->_socket, $name), $params);
+            }
+            catch (\RedisException $e) {
+                if($i<5)
+                {
+                    $this->handle_exception($e,$name,$params);
+                    usleep(100);
+                    $i++;
+                }
+                elseif($i<15)
+                {
+                    $this->handle_exception($e,$name,$params);
+                    usleep(500);$i++;
+                }
+                else{
+                    $this->handle_exception($e,$name,$params, false);
+                    break;
+                }
+
+            }catch(Exception $e){
+                $this->handle_exception($e,$name,$params,false);
+                break;
+            }
+        }
     }
 
     /**
@@ -222,24 +263,56 @@ class PhpredisConnection extends Connection{
      */
     public function __call($name, $arguments)
     {
+
+        $i=0;
+        while($i<10)
+        {
             try{
                 return call_user_func_array(array($this->_socket,$name), $arguments);
+                break;
             }
-            catch (Exception $e) {
-                $this->handle_exception($e,$name,$arguments);
+            catch (\RedisException $e) {
+                if($i<5)
+                {
+                    $this->handle_exception($e,$name,$arguments);
+                    $i++;
+                }
+                elseif($i<10)
+                {
+                    $this->handle_exception($e,$name,$arguments);
+                    usleep(500);$i++;
+                }
+                else{
+                    $this->handle_exception($e,$name,$arguments, false);
+                    break;
+                }
+
+            }catch(Exception $e){
+                $this->handle_exception($e,$name,$arguments,false);
+               break;
             }
+        }
+
     }
 
     /**
      * @param $e
      * @param $name
      * @param $args
+     *
+     * @throws \yii\base\Exception
      */
-    private function handle_exception($e,$name,$args)
+    private function handle_exception($e,$name,$args, $logonly=true)
     {
+
         $err=$e->getMessage();
-        $msg="Caught exception: ".$err."\tcall ".$name."\targs ".implode(" ",$args)."\n";
-        \Yii::error($msg);
+        $msg="Caught exception: ".(is_string($err)?$err:implode("\t", $err))."\tcall ".$name."\targs ".serialize($args)."\n";
+        if($logonly){
+            \Yii::error($msg, 'redisman');
+        }else{
+            throw new Exception($msg, $e->getCode());
+        }
+
     }
 
     /**

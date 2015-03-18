@@ -11,6 +11,7 @@ namespace insolita\redisman;
 
 use insolita\redisman\components\PhpredisConnection;
 use yii\base\ErrorException;
+use yii\base\Exception;
 use yii\base\InvalidConfigException;
 use yii\base\ModelEvent;
 use yii\base\Module;
@@ -255,8 +256,17 @@ class Redisman extends Module
         if (!isset($this->connections[$name])) {
             throw new ErrorException(self::t('redisman', 'Wrong redis connection name'));
         } else {
-            $this->_conCurrent = $name;
-            $this->_connect = $this->getConnection(true, $db);
+            $oldcon=$this->_conCurrent;
+            $olddb=$this->_dbCurrent;
+            try{
+                $this->_conCurrent = $name;
+                $this->_connect = $this->getConnection(true, $db);
+            }catch(Exception $e){
+                \Yii::$app->user->setFlash('error', Redisman::t('redisman','Can`t set connection with '.$name));
+                $this->_conCurrent = $oldcon;
+                $this->_connect = $this->getConnection(true, $olddb);
+            }
+
             \Yii::$app->session->set('RedisManager_conCurrent', $this->_conCurrent);
             \Yii::$app->session->set('RedisManager_dbCurrent', $this->_dbCurrent);
             return $this->_connect;
@@ -293,12 +303,22 @@ class Redisman extends Module
 
         if ($this->_connect instanceof PhpredisConnection) {
             $sects = [
-                'server', 'clients', 'memory', 'persistence', 'stats', 'cpu', 'commandstats', 'clusters', 'keyspace'
+                'server',
+               // 'clients',
+                'memory',
+              //  'persistence',
+                'stats',
+                'cpu',
+                'commandstats',
+                'clusters',
+                'keyspace'
             ];
             foreach ($sects as $sect) {
                 $info = $this->_connect->executeCommand('INFO', [strtoupper($sect)]);
-                foreach ($info as $k => $v) {
-                    $infoex[$sect][$k] = trim($v);
+                if(is_array($info)){
+                    foreach ($info as $k => $v) {
+                        $infoex[$sect][$k] = trim($v);
+                    }
                 }
             }
 
